@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "snake-game"
+version = "0.1.0"
+description = "A classic Snake game implementation using pygame"
+authors = ["Thomas Nelson <https://github.com/sfelf>"]
+readme = "README.md"
+packages = [{include = "snake_game"}]
+
+[tool.poetry.dependencies]
+python = "^3.13"
+pygame = "2.6.1"
+
+[tool.poetry.scripts]
+snake-game = "snake_game.main:main"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
