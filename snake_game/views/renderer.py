@@ -237,7 +237,10 @@ class GameRenderer:
             y_offset += 40
     
     def _draw_splash_graphics(self):
-        """Draw graphics for the splash screen."""
+        """Draw graphics for the splash screen using high-quality Twemoji images."""
+        # Ensure images are loaded
+        self._ensure_images_loaded()
+        
         # Draw a decorative snake
         snake_points = []
         center_x = GameConstants.WINDOW_WIDTH // 2
@@ -257,20 +260,57 @@ class GameRenderer:
                 pygame.draw.circle(self.screen, GameConstants.BLACK, (x + 4, y - 3), 2)
                 pygame.draw.circle(self.screen, GameConstants.BLACK, (x + 4, y + 3), 2)
         
-        # Draw some decorative fruits around
+        # Draw high-quality Twemoji fruits around the screen (avoiding text areas)
+        # Text areas: Title at y=200, Instructions from y=280 to y=480
+        # Safe areas: Top corners, sides, and bottom
         fruits = [
-            (100, 200, FruitType.APPLE),
-            (GameConstants.WINDOW_WIDTH - 100, 180, FruitType.BANANA),
-            (150, 350, FruitType.CHERRY),
-            (GameConstants.WINDOW_WIDTH - 150, 320, FruitType.ORANGE),
-            (center_x, 400, FruitType.PEAR)
+            # Top corners (above title)
+            (80, 150, FruitType.APPLE),
+            (GameConstants.WINDOW_WIDTH - 80, 140, FruitType.BANANA),
+            
+            # Side areas (between title and instructions)
+            (60, 240, FruitType.CHERRY),
+            (GameConstants.WINDOW_WIDTH - 60, 250, FruitType.ORANGE),
+            
+            # Bottom area (below instructions)
+            (center_x - 60, 520, FruitType.PEAR),
+            (center_x + 60, 510, FruitType.APPLE),
+            
+            # Additional decorative fruits in safe areas
+            (120, 480, FruitType.BANANA),
+            (GameConstants.WINDOW_WIDTH - 120, 490, FruitType.CHERRY)
         ]
         
         for x, y, fruit_type in fruits:
-            self._draw_decorative_fruit(x, y, fruit_type)
+            self._draw_decorative_fruit_image(x, y, fruit_type)
     
-    def _draw_decorative_fruit(self, x: int, y: int, fruit_type: FruitType):
-        """Draw a decorative fruit with enhanced graphics for the splash screen.
+    def _draw_decorative_fruit_image(self, x: int, y: int, fruit_type: FruitType):
+        """Draw a decorative fruit using high-quality Twemoji images when available.
+        
+        Args:
+            x: X position
+            y: Y position
+            fruit_type: Type of fruit to draw
+        """
+        name, primary_color, secondary_color = fruit_type.value
+        
+        if self.use_images and name in self.fruit_images:
+            # Use high-quality Twemoji image, scaled up for splash screen
+            image = self.fruit_images[name]
+            # Scale up the image for better visibility on splash screen
+            scaled_image = pygame.transform.scale(image, (32, 32))  # 1.6x larger than game size
+            
+            # Center the image at the given position
+            image_rect = scaled_image.get_rect()
+            image_rect.center = (x, y)
+            
+            self.screen.blit(scaled_image, image_rect)
+        else:
+            # Fallback to enhanced custom graphics
+            self._draw_decorative_fruit_custom(x, y, fruit_type)
+    
+    def _draw_decorative_fruit_custom(self, x: int, y: int, fruit_type: FruitType):
+        """Draw a decorative fruit with enhanced custom graphics as fallback.
         
         Args:
             x: X position
