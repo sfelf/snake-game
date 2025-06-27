@@ -1,6 +1,6 @@
 # Snake Game
 
-A classic Snake game implementation using Python and Pygame with enhanced graphics and features.
+A classic Snake game implementation using Python and Pygame with enhanced graphics, professional architecture, and comprehensive testing.
 
 ## Features
 
@@ -42,13 +42,73 @@ A classic Snake game implementation using Python and Pygame with enhanced graphi
 - **High Score Reset**: Hidden 'R' command with confirmation dialog to reset scores
 - **Improved Navigation**: Enhanced menu system with multiple game states
 
-## Game Rules
+## Architecture
 
-1. Use arrow keys to control the snake's direction
-2. Eat different types of fruits to grow longer and score points
-3. Each fruit gives 4 points and increases the snake's speed
-4. Avoid hitting the walls or the snake's own body
-5. Try to achieve a high score with the various fruit types!
+This project follows professional software development practices with a clean, modular architecture:
+
+### Design Patterns
+- **Model-View-Controller (MVC)**: Clear separation of concerns
+- **Single Responsibility Principle**: Each class has one focused purpose
+- **Dependency Injection**: Components are loosely coupled
+- **Observer Pattern**: Game state management
+
+### Project Structure
+
+```
+snake-game/
+├── snake_game/
+│   ├── models/              # Game logic and data models
+│   │   ├── __init__.py
+│   │   ├── enums.py         # Game enumerations
+│   │   ├── snake.py         # Snake model
+│   │   ├── fruit.py         # Fruit model
+│   │   ├── score.py         # Score management
+│   │   └── game_state.py    # Game state management
+│   ├── views/               # Rendering and visual components
+│   │   ├── __init__.py
+│   │   └── renderer.py      # Game renderer
+│   ├── controllers/         # Game logic coordination
+│   │   ├── __init__.py
+│   │   ├── game_controller.py    # Main game controller
+│   │   └── input_handler.py     # Input processing
+│   ├── utils/               # Utilities and constants
+│   │   ├── __init__.py
+│   │   ├── constants.py     # Game constants
+│   │   └── audio.py         # Audio management
+│   ├── __init__.py
+│   └── main.py              # Entry point
+├── tests/                   # Comprehensive test suite
+│   ├── __init__.py
+│   ├── conftest.py          # Pytest configuration
+│   ├── test_models.py       # Model tests
+│   ├── test_controllers.py  # Controller tests
+│   ├── test_utils.py        # Utility tests
+│   └── test_integration.py  # Integration tests
+├── pytest.ini              # Pytest configuration
+├── pyproject.toml           # Poetry configuration
+├── poetry.lock              # Dependency lock file
+├── .gitignore              # Git ignore rules
+└── README.md               # This file
+```
+
+### Key Components
+
+#### Models
+- **Snake**: Handles snake movement, collision detection, and growth
+- **Fruit**: Manages fruit spawning, types, and collision detection
+- **ScoreManager**: Handles scoring and high score persistence
+- **GameStateManager**: Manages game state transitions
+
+#### Views
+- **GameRenderer**: Handles all rendering and visual effects
+
+#### Controllers
+- **GameController**: Main game loop and component coordination
+- **InputHandler**: Processes user input and converts to actions
+
+#### Utils
+- **GameConstants**: Centralized configuration and constants
+- **AudioManager**: Handles all audio functionality
 
 ## Installation
 
@@ -89,13 +149,45 @@ poetry run python -m snake_game.main
 - **R**: Reset high scores (with confirmation)
 - **Y/N**: Confirm/cancel high score reset
 
-## Game Screens
+## Development
 
-1. **Splash Screen**: Animated title with decorative snake and fruits, game instructions
-2. **Game Screen**: Main gameplay with enhanced graphics, UI panel, and bordered play area
-3. **Game Over Screen**: Shows final score with pulsing effects and menu options
-4. **High Scores Screen**: Displays top 5 scores with ranking colors
-5. **Confirmation Screen**: High score reset confirmation dialog
+### Running Tests
+
+The project includes a comprehensive test suite using pytest:
+
+```bash
+# Run all tests
+poetry run pytest
+
+# Run tests with verbose output
+poetry run pytest -v
+
+# Run specific test categories
+poetry run pytest tests/test_models.py
+poetry run pytest tests/test_controllers.py
+poetry run pytest tests/test_integration.py
+
+# Run tests with coverage
+poetry run pytest --cov=snake_game
+```
+
+### Test Categories
+
+- **Unit Tests**: Test individual components in isolation
+- **Integration Tests**: Test component interactions
+- **Model Tests**: Test game logic and data models
+- **Controller Tests**: Test input handling and game coordination
+- **Utility Tests**: Test helper functions and constants
+
+### Code Quality
+
+The codebase follows professional standards:
+
+- **Type Hints**: Full type annotation for better IDE support
+- **Docstrings**: Comprehensive documentation for all public methods
+- **Error Handling**: Graceful handling of edge cases
+- **Separation of Concerns**: Clear boundaries between components
+- **Testability**: Designed for easy testing and mocking
 
 ## Technical Details
 
@@ -120,34 +212,14 @@ poetry run python -m snake_game.main
 - **Background Music**: Generated melodic soundtrack
 - **Sound Effects**: Dynamic audio with increasing urgency
 
-## Development
-
-### Running Tests
-
-```bash
-poetry run python test_game.py
-```
-
-### Project Structure
-
-```
-snake-game/
-├── snake_game/
-│   ├── __init__.py
-│   ├── main.py          # Entry point
-│   └── game.py          # Main game logic with enhanced features
-├── test_game.py         # Comprehensive test suite
-├── pyproject.toml       # Poetry configuration
-├── poetry.lock          # Dependency lock file
-├── .gitignore          # Git ignore rules
-└── README.md           # This file
-```
-
 ## Dependencies
 
 - **Python**: ^3.13
 - **pygame**: 2.6.1 (for graphics, sound, and input handling)
 - **numpy**: ^2.3.1 (for audio generation and mathematical operations)
+
+### Development Dependencies
+- **pytest**: ^8.4.1 (for testing framework)
 
 ## High Scores
 
@@ -169,12 +241,20 @@ The game includes multiple states for a polished experience:
 
 ## Contributing
 
-Feel free to contribute to this project by:
-- Reporting bugs or issues
-- Suggesting new features or improvements
-- Submitting pull requests
-- Improving documentation
-- Adding new fruit types or visual effects
+We welcome contributions! The modular architecture makes it easy to:
+
+- Add new fruit types in `models/fruit.py`
+- Implement new visual effects in `views/renderer.py`
+- Add new game mechanics in the appropriate model
+- Extend the test suite with new test cases
+
+### Development Guidelines
+
+1. Follow the existing architecture patterns
+2. Add tests for new functionality
+3. Use type hints and docstrings
+4. Maintain separation of concerns
+5. Update documentation as needed
 
 ## License
 
