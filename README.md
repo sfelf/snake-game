@@ -12,12 +12,13 @@ A classic Snake game implementation using Python and Pygame with enhanced graphi
 - **High Score Tracking**: Keeps track of the top 5 highest scores (starts with all zeros)
 
 ### Visual Enhancements
-- **Multiple Fruit Types**: 5 different fruits with unique graphics:
-  - 🍎 **Apple**: Red with green stem
-  - 🍐 **Pear**: Yellow pear shape with stem
+- **High-Quality Fruit Graphics**: Uses system emoji fonts for crisp, beautiful fruit display:
+  - 🍎 **Apple**: Red apple with green stem
+  - 🍐 **Pear**: Yellow pear shape with stem  
   - 🍌 **Banana**: Curved yellow banana with brown tip
   - 🍒 **Cherry**: Twin red cherries with stems
   - 🍊 **Orange**: Orange with textured surface
+- **Smart Rendering**: Automatically detects emoji support and falls back to custom graphics on unsupported systems
 - **Enhanced Snake Graphics**: 
   - Distinct head with directional eyes
   - Patterned body segments with alternating colors
@@ -207,7 +208,8 @@ The codebase follows professional standards:
 - **Fruit Placement**: Avoids 1-cell border around play area edges
 
 ### Graphics & Audio
-- **Fruit Graphics**: Custom-drawn sprites for each fruit type
+- **High-Quality Fruit Display**: System emoji fonts provide crisp, colorful fruit graphics
+- **Smart Fallback System**: Custom pixel art for systems without emoji support
 - **Snake Graphics**: Directional head with eyes, patterned body
 - **Background Music**: Generated melodic soundtrack
 - **Sound Effects**: Dynamic audio with increasing urgency

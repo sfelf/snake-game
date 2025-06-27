@@ -20,6 +20,38 @@ class GameRenderer:
         self.font = pygame.font.Font(None, 36)
         self.small_font = pygame.font.Font(None, 24)
         self.large_font = pygame.font.Font(None, 48)
+        
+        # Try to get a system font that supports emojis
+        self.emoji_font = None
+        self.use_emoji = False
+        
+        try:
+            # Try to find a system font that supports emojis
+            emoji_fonts = [
+                'Apple Color Emoji',  # macOS
+                'Segoe UI Emoji',     # Windows
+                'Noto Color Emoji',   # Linux
+                'Symbola',            # Fallback
+            ]
+            
+            for font_name in emoji_fonts:
+                try:
+                    self.emoji_font = pygame.font.SysFont(font_name, 20)
+                    # Test if emoji rendering works
+                    test_surface = self.emoji_font.render("🍎", True, (255, 255, 255))
+                    if test_surface.get_width() > 0:
+                        self.use_emoji = True
+                        break
+                except:
+                    continue
+            
+            if not self.use_emoji:
+                # Fallback to default font
+                self.emoji_font = pygame.font.Font(None, 24)
+                
+        except:
+            self.emoji_font = pygame.font.Font(None, 24)
+            self.use_emoji = False
     
     def render_splash_screen(self):
         """Render the splash screen."""
@@ -222,7 +254,7 @@ class GameRenderer:
             self._draw_decorative_fruit(x, y, fruit_type)
     
     def _draw_decorative_fruit(self, x: int, y: int, fruit_type: FruitType):
-        """Draw a decorative fruit for the splash screen.
+        """Draw a decorative fruit using emoji when available for the splash screen.
         
         Args:
             x: X position
@@ -231,6 +263,33 @@ class GameRenderer:
         """
         name, primary_color, secondary_color = fruit_type.value
         
+        if self.use_emoji:
+            # Map fruit types to emoji
+            fruit_emoji_map = {
+                "apple": "🍎",
+                "pear": "🍐", 
+                "banana": "🍌",
+                "cherry": "🍒",
+                "orange": "🍊"
+            }
+            
+            emoji = fruit_emoji_map.get(name, "🍎")
+            
+            try:
+                # Use a larger font for decorative fruits on splash screen
+                large_emoji_font = pygame.font.SysFont('Apple Color Emoji', 28) if self.use_emoji else self.emoji_font
+                emoji_surface = large_emoji_font.render(emoji, True, GameConstants.WHITE)
+                
+                # Center the emoji at the given position
+                emoji_rect = emoji_surface.get_rect()
+                emoji_rect.center = (x, y)
+                
+                self.screen.blit(emoji_surface, emoji_rect)
+                return
+            except:
+                pass  # Fall through to custom graphics
+        
+        # Fallback to custom graphics
         if name == "apple":
             pygame.draw.circle(self.screen, primary_color, (x, y + 2), 12)
             pygame.draw.rect(self.screen, secondary_color, (x - 1, y - 8, 2, 6))
@@ -356,7 +415,7 @@ class GameRenderer:
             pygame.draw.circle(self.screen, (0, 80, 0), (center_x, center_y), 2)
     
     def _draw_fruit(self, fruit: Fruit):
-        """Draw a fruit with improved graphics.
+        """Draw a fruit using emoji icons when available, fallback to custom graphics.
         
         Args:
             fruit: Fruit object to draw
@@ -364,6 +423,52 @@ class GameRenderer:
         x, y = fruit.position
         screen_x = GameConstants.PLAY_AREA_X + x * GameConstants.CELL_SIZE
         screen_y = GameConstants.PLAY_AREA_Y + y * GameConstants.CELL_SIZE
+        
+        if self.use_emoji:
+            self._draw_fruit_emoji(screen_x, screen_y, fruit.name)
+        else:
+            self._draw_fruit_custom(screen_x, screen_y, fruit)
+    
+    def _draw_fruit_emoji(self, screen_x: int, screen_y: int, fruit_name: str):
+        """Draw fruit using emoji.
+        
+        Args:
+            screen_x: Screen X position
+            screen_y: Screen Y position  
+            fruit_name: Name of the fruit
+        """
+        # Map fruit types to emoji
+        fruit_emoji_map = {
+            "apple": "🍎",
+            "pear": "🍐", 
+            "banana": "🍌",
+            "cherry": "🍒",
+            "orange": "🍊"
+        }
+        
+        emoji = fruit_emoji_map.get(fruit_name, "🍎")
+        
+        try:
+            emoji_surface = self.emoji_font.render(emoji, True, GameConstants.WHITE)
+            
+            # Center the emoji in the cell
+            emoji_rect = emoji_surface.get_rect()
+            emoji_rect.center = (screen_x + GameConstants.CELL_SIZE // 2, 
+                               screen_y + GameConstants.CELL_SIZE // 2)
+            
+            self.screen.blit(emoji_surface, emoji_rect)
+        except:
+            # Fallback to custom graphics if emoji fails
+            self._draw_fruit_custom_fallback(screen_x, screen_y, fruit_name)
+    
+    def _draw_fruit_custom(self, screen_x: int, screen_y: int, fruit: Fruit):
+        """Draw fruit using custom graphics.
+        
+        Args:
+            screen_x: Screen X position
+            screen_y: Screen Y position
+            fruit: Fruit object
+        """
         center_x = screen_x + GameConstants.CELL_SIZE // 2
         center_y = screen_y + GameConstants.CELL_SIZE // 2
         
@@ -372,48 +477,56 @@ class GameRenderer:
         secondary_color = fruit.secondary_color
         
         if name == "apple":
-            # Draw apple
             pygame.draw.circle(self.screen, primary_color, (center_x, center_y + 2), 8)
-            # Apple stem
             pygame.draw.rect(self.screen, secondary_color, (center_x - 1, screen_y + 2, 2, 4))
-            # Apple leaf
             pygame.draw.ellipse(self.screen, secondary_color, (center_x + 2, screen_y + 2, 4, 2))
-        
         elif name == "pear":
-            # Draw pear shape
             pygame.draw.circle(self.screen, primary_color, (center_x, center_y + 3), 6)
             pygame.draw.circle(self.screen, primary_color, (center_x, center_y - 2), 4)
-            # Pear stem
             pygame.draw.rect(self.screen, secondary_color, (center_x - 1, screen_y + 2, 2, 3))
-        
         elif name == "banana":
-            # Draw banana shape
             points = [
                 (center_x - 6, center_y + 2), (center_x - 4, center_y - 6),
                 (center_x + 2, center_y - 4), (center_x + 6, center_y + 4),
                 (center_x + 2, center_y + 6), (center_x - 4, center_y + 4)
             ]
             pygame.draw.polygon(self.screen, primary_color, points)
-            # Banana tip
             pygame.draw.circle(self.screen, secondary_color, (center_x - 4, center_y - 6), 2)
-        
         elif name == "cherry":
-            # Draw cherry (two small circles)
             pygame.draw.circle(self.screen, primary_color, (center_x - 3, center_y + 2), 5)
             pygame.draw.circle(self.screen, primary_color, (center_x + 3, center_y + 2), 5)
-            # Cherry stems
             pygame.draw.line(self.screen, secondary_color, 
                            (center_x - 3, center_y - 3), (center_x - 1, center_y - 6), 2)
             pygame.draw.line(self.screen, secondary_color, 
                            (center_x + 3, center_y - 3), (center_x + 1, center_y - 6), 2)
-        
         elif name == "orange":
-            # Draw orange
             pygame.draw.circle(self.screen, primary_color, (center_x, center_y), 8)
-            # Orange texture (small dots)
             for i in range(3):
                 for j in range(3):
                     dot_x = center_x - 4 + i * 3
                     dot_y = center_y - 4 + j * 3
-                    if (dot_x - center_x) ** 2 + (dot_y - center_y) ** 2 <= 36:  # Inside circle
+                    if (dot_x - center_x) ** 2 + (dot_y - center_y) ** 2 <= 36:
                         pygame.draw.circle(self.screen, secondary_color, (dot_x, dot_y), 1)
+    
+    def _draw_fruit_custom_fallback(self, screen_x: int, screen_y: int, fruit_name: str):
+        """Simple fallback fruit drawing.
+        
+        Args:
+            screen_x: Screen X position
+            screen_y: Screen Y position
+            fruit_name: Name of the fruit
+        """
+        center_x = screen_x + GameConstants.CELL_SIZE // 2
+        center_y = screen_y + GameConstants.CELL_SIZE // 2
+        
+        # Simple colored circles as fallback
+        color_map = {
+            "apple": GameConstants.RED,
+            "pear": GameConstants.YELLOW,
+            "banana": GameConstants.YELLOW,
+            "cherry": (220, 20, 60),
+            "orange": GameConstants.ORANGE
+        }
+        
+        color = color_map.get(fruit_name, GameConstants.RED)
+        pygame.draw.circle(self.screen, color, (center_x, center_y), 8)
