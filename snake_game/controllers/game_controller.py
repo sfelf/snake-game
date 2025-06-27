@@ -130,8 +130,15 @@ class GameController:
     
     def _move_snake(self) -> None:
         """Move the snake and handle game logic."""
-        # Move the snake
-        new_head = self.snake.move()
+        # Check fruit collision first to determine if snake should grow
+        head_x, head_y = self.snake.head
+        dx, dy = self.snake.next_direction.value
+        next_head_pos = (head_x + dx, head_y + dy)
+        
+        will_eat_fruit = self.fruit.is_eaten_by(next_head_pos)
+        
+        # Move the snake (grow if eating fruit)
+        new_head = self.snake.move(grow=will_eat_fruit)
         
         # Check wall collision
         if self.snake.check_wall_collision(GameConstants.GRID_WIDTH, GameConstants.GRID_HEIGHT):
@@ -143,12 +150,9 @@ class GameController:
             self._game_over()
             return
         
-        # Check fruit collision
-        if self.fruit.is_eaten_by(new_head):
+        # Handle fruit eating
+        if will_eat_fruit:
             self._eat_fruit()
-        else:
-            # Remove the tail that was added by move() if no fruit was eaten
-            self.snake.segments.pop()
         
         # Play move sound with urgency
         if self.snake.length > GameConstants.INITIAL_SNAKE_LENGTH:

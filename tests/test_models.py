@@ -84,6 +84,53 @@ class TestSnake:
         assert snake.head == (10, 10)
         assert snake.direction == Direction.RIGHT
         assert snake.next_direction == Direction.RIGHT
+    
+    def test_multiple_moves_maintain_length(self, snake):
+        """Test that multiple moves without growth maintain snake length."""
+        initial_length = snake.length
+        
+        # Make many moves without growth
+        for i in range(20):
+            snake.move(grow=False)
+            assert snake.length == initial_length, \
+                f"Snake length changed from {initial_length} to {snake.length} on move {i+1}"
+            assert len(snake.segments) > 0, \
+                f"Snake segments became empty on move {i+1}"
+    
+    def test_alternating_growth_and_normal_moves(self, snake):
+        """Test alternating between growth and normal moves."""
+        initial_length = snake.length
+        
+        # Grow, then make normal moves
+        snake.move(grow=True)
+        assert snake.length == initial_length + 1
+        
+        new_length = snake.length
+        for i in range(5):
+            snake.move(grow=False)
+            assert snake.length == new_length, \
+                f"Snake length should remain {new_length} but became {snake.length} on move {i+1}"
+        
+        # Grow again
+        snake.move(grow=True)
+        assert snake.length == new_length + 1
+    
+    def test_snake_never_becomes_empty(self, snake):
+        """Test that snake segments never become empty through any operation."""
+        # Test various operations
+        operations = [
+            lambda: snake.move(grow=False),
+            lambda: snake.move(grow=True),
+            lambda: snake.set_direction(Direction.UP),
+            lambda: snake.set_direction(Direction.DOWN),
+        ]
+        
+        for i, operation in enumerate(operations * 10):  # Repeat operations
+            operation()
+            assert len(snake.segments) > 0, \
+                f"Snake segments became empty after operation {i}"
+            assert snake.head is not None, \
+                f"Snake head became None after operation {i}"
 
 
 class TestFruit:
