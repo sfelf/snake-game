@@ -21,9 +21,53 @@ class GameRenderer:
         self.small_font = pygame.font.Font(None, 24)
         self.large_font = pygame.font.Font(None, 48)
         
-        # For now, we'll use custom graphics since pygame emoji support is limited
-        # In the future, we could implement proper emoji rendering with PIL or other libraries
-        self.use_emoji = False
+        # Load fruit images (after pygame display is initialized)
+        self.fruit_images = {}
+        self.use_images = False
+        # Delay loading until first render to ensure pygame is fully initialized
+        self._images_loaded = False
+    
+    def _ensure_images_loaded(self):
+        """Ensure fruit images are loaded (called on first render)."""
+        if not self._images_loaded:
+            self.use_images = self.load_fruit_images()
+            self._images_loaded = True
+    
+    def load_fruit_images(self):
+        """Load high-quality fruit images.
+        
+        Returns:
+            True if images were loaded successfully, False otherwise
+        """
+        import os
+        
+        try:
+            # Path to fruit images
+            assets_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'assets', 'images')
+            
+            fruit_names = ['apple', 'pear', 'banana', 'cherry', 'orange']
+            
+            for fruit_name in fruit_names:
+                image_path = os.path.join(assets_dir, f'{fruit_name}.png')
+                try:
+                    if os.path.exists(image_path):
+                        # Load and convert image for optimal blitting
+                        image = pygame.image.load(image_path).convert_alpha()
+                        self.fruit_images[fruit_name] = image
+                    else:
+                        print(f"Warning: Could not find {image_path}")
+                except Exception as e:
+                    print(f"Warning: Could not load {fruit_name} image: {e}")
+            
+            if self.fruit_images:
+                print(f"✓ Loaded {len(self.fruit_images)} high-quality Twemoji fruit images")
+                return True
+            else:
+                print("⚠️  No fruit images loaded, falling back to custom graphics")
+                return False
+        except Exception as e:
+            print(f"Error loading fruit images: {e}")
+            return False
     
     def render_splash_screen(self):
         """Render the splash screen."""
@@ -388,14 +432,40 @@ class GameRenderer:
             pygame.draw.circle(self.screen, (0, 80, 0), (center_x, center_y), 2)
     
     def _draw_fruit(self, fruit: Fruit):
-        """Draw a fruit with enhanced custom graphics that look more like emojis.
+        """Draw a fruit using high-quality emoji images when available.
         
         Args:
             fruit: Fruit object to draw
         """
+        # Ensure images are loaded
+        self._ensure_images_loaded()
+        
         x, y = fruit.position
         screen_x = GameConstants.PLAY_AREA_X + x * GameConstants.CELL_SIZE
         screen_y = GameConstants.PLAY_AREA_Y + y * GameConstants.CELL_SIZE
+        
+        fruit_name = fruit.name
+        
+        if self.use_images and fruit_name in self.fruit_images:
+            # Use high-quality emoji image
+            image = self.fruit_images[fruit_name]
+            # Center the image in the cell
+            image_rect = image.get_rect()
+            image_rect.center = (screen_x + GameConstants.CELL_SIZE // 2, 
+                               screen_y + GameConstants.CELL_SIZE // 2)
+            self.screen.blit(image, image_rect)
+        else:
+            # Fallback to custom graphics
+            self._draw_fruit_custom(screen_x, screen_y, fruit)
+    
+    def _draw_fruit_custom(self, screen_x: int, screen_y: int, fruit: Fruit):
+        """Draw fruit using custom graphics as fallback.
+        
+        Args:
+            screen_x: Screen X position
+            screen_y: Screen Y position
+            fruit: Fruit object
+        """
         center_x = screen_x + GameConstants.CELL_SIZE // 2
         center_y = screen_y + GameConstants.CELL_SIZE // 2
         
@@ -403,29 +473,21 @@ class GameRenderer:
         
         if name == "apple":
             # Enhanced apple - more emoji-like
-            # Main apple body (red with gradient effect)
             pygame.draw.circle(self.screen, (220, 20, 20), (center_x, center_y + 1), 9)
             pygame.draw.circle(self.screen, (255, 50, 50), (center_x - 2, center_y - 1), 7)
-            # Apple stem (brown)
             pygame.draw.rect(self.screen, (101, 67, 33), (center_x - 1, screen_y + 3, 2, 5))
-            # Apple leaf (green)
             pygame.draw.ellipse(self.screen, (34, 139, 34), (center_x + 1, screen_y + 3, 6, 3))
-            # Highlight
             pygame.draw.circle(self.screen, (255, 200, 200), (center_x - 3, center_y - 2), 2)
         
         elif name == "pear":
             # Enhanced pear - more emoji-like
-            # Pear body (yellow-green gradient)
             pygame.draw.circle(self.screen, (255, 255, 100), (center_x, center_y + 3), 7)
             pygame.draw.circle(self.screen, (200, 255, 100), (center_x, center_y - 1), 5)
-            # Pear stem
             pygame.draw.rect(self.screen, (101, 67, 33), (center_x - 1, screen_y + 3, 2, 4))
-            # Highlight
             pygame.draw.circle(self.screen, (255, 255, 200), (center_x - 2, center_y), 2)
         
         elif name == "banana":
             # Enhanced banana - more emoji-like curved shape
-            # Banana body (yellow with brown spots)
             points = [
                 (center_x - 7, center_y + 3),
                 (center_x - 5, center_y - 7),
@@ -435,39 +497,31 @@ class GameRenderer:
                 (center_x - 4, center_y + 5)
             ]
             pygame.draw.polygon(self.screen, (255, 255, 0), points)
-            # Banana tip (brown)
             pygame.draw.circle(self.screen, (101, 67, 33), (center_x - 5, center_y - 7), 2)
-            # Banana lines
             pygame.draw.line(self.screen, (200, 200, 0), (center_x - 4, center_y - 4), (center_x + 3, center_y + 3), 1)
             pygame.draw.line(self.screen, (200, 200, 0), (center_x - 2, center_y - 5), (center_x + 5, center_y + 2), 1)
         
         elif name == "cherry":
             # Enhanced cherries - more emoji-like
-            # Two cherries (dark red with highlights)
             pygame.draw.circle(self.screen, (139, 0, 0), (center_x - 3, center_y + 2), 6)
             pygame.draw.circle(self.screen, (220, 20, 60), (center_x - 3, center_y + 2), 5)
             pygame.draw.circle(self.screen, (139, 0, 0), (center_x + 3, center_y + 3), 6)
             pygame.draw.circle(self.screen, (220, 20, 60), (center_x + 3, center_y + 3), 5)
-            # Cherry stems (green)
             pygame.draw.line(self.screen, (34, 139, 34), (center_x - 3, center_y - 4), (center_x - 1, center_y - 7), 2)
             pygame.draw.line(self.screen, (34, 139, 34), (center_x + 3, center_y - 3), (center_x + 1, center_y - 7), 2)
-            # Highlights
             pygame.draw.circle(self.screen, (255, 100, 100), (center_x - 4, center_y + 1), 2)
             pygame.draw.circle(self.screen, (255, 100, 100), (center_x + 2, center_y + 2), 2)
         
         elif name == "orange":
             # Enhanced orange - more emoji-like with texture
-            # Orange body (orange with gradient)
             pygame.draw.circle(self.screen, (255, 140, 0), (center_x, center_y), 9)
             pygame.draw.circle(self.screen, (255, 165, 0), (center_x - 1, center_y - 1), 7)
-            # Orange texture (dimpled surface)
             for i in range(-1, 2):
                 for j in range(-1, 2):
                     if i == 0 and j == 0:
                         continue
                     dot_x = center_x + i * 3
                     dot_y = center_y + j * 3
-                    if (dot_x - center_x) ** 2 + (dot_y - center_y) ** 2 <= 49:  # Inside circle
+                    if (dot_x - center_x) ** 2 + (dot_y - center_y) ** 2 <= 49:
                         pygame.draw.circle(self.screen, (200, 100, 0), (dot_x, dot_y), 1)
-            # Orange stem area
             pygame.draw.circle(self.screen, (34, 139, 34), (center_x, center_y - 8), 2)
