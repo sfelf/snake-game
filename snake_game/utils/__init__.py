@@ -2,5 +2,6 @@
 
 from .audio import AudioManager
 from .constants import GameConstants
+from .path_smoother import PathSmoother
 
-__all__ = ['AudioManager', 'GameConstants']
+__all__ = ['AudioManager', 'GameConstants', 'PathSmoother']
