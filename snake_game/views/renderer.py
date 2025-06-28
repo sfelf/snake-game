@@ -92,7 +92,7 @@ class GameRenderer:
             "Each fruit gives 4 points and increases speed",
             "",
             "Press any key to start!",
-            "Press R to reset high scores",
+            "Press H to view high scores",
             "Press Q to quit"
         ]
         
@@ -158,7 +158,6 @@ class GameRenderer:
         instructions = [
             "Press SPACE to play again",
             "Press H to view high scores",
-            "Press R to reset high scores",
             "Press Q to quit"
         ]
         
@@ -197,7 +196,6 @@ class GameRenderer:
         instructions = [
             "Press SPACE to play again",
             "Press ESC to return to splash screen",
-            "Press R to reset high scores",
             "Press Q to quit"
         ]
         
