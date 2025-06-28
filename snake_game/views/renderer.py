@@ -407,67 +407,229 @@ class GameRenderer:
         pygame.draw.rect(self.screen, GameConstants.BLACK, play_rect)
     
     def _draw_snake(self, snake: Snake):
-        """Draw the snake with enhanced graphics.
+        """Draw the snake with realistic, high-resolution graphics.
         
         Args:
             snake: Snake object to draw
         """
-        for i, segment in enumerate(snake.segments):
-            x, y = segment
-            is_head = (i == 0)
-            self._draw_snake_segment(x, y, is_head, i, snake.direction)
+        # Draw body segments first (back to front)
+        for i in range(len(snake.segments) - 1, 0, -1):
+            x, y = snake.segments[i]
+            self._draw_snake_body_segment(x, y, i, snake.segments)
+        
+        # Draw head last (on top)
+        if snake.segments:
+            head_x, head_y = snake.segments[0]
+            self._draw_snake_head(head_x, head_y, snake.direction)
     
-    def _draw_snake_segment(self, x: int, y: int, is_head: bool, segment_index: int, direction: Direction):
-        """Draw a single snake segment with improved graphics.
+    def _draw_snake_body_segment(self, x: int, y: int, segment_index: int, segments: list):
+        """Draw a realistic rounded snake body segment.
         
         Args:
             x: Grid x position
             y: Grid y position
-            is_head: Whether this is the head segment
             segment_index: Index of the segment
-            direction: Current direction (for head orientation)
+            segments: All snake segments for connection logic
         """
         screen_x = GameConstants.PLAY_AREA_X + x * GameConstants.CELL_SIZE
         screen_y = GameConstants.PLAY_AREA_Y + y * GameConstants.CELL_SIZE
-        rect = pygame.Rect(screen_x, screen_y, GameConstants.CELL_SIZE, GameConstants.CELL_SIZE)
+        center_x = screen_x + GameConstants.CELL_SIZE // 2
+        center_y = screen_y + GameConstants.CELL_SIZE // 2
         
-        if is_head:
-            # Draw snake head with eyes and direction indicator
-            pygame.draw.rect(self.screen, GameConstants.GREEN, rect)
-            pygame.draw.rect(self.screen, GameConstants.DARK_GREEN, rect, 2)
-            
-            # Draw eyes based on direction
-            eye_size = 3
-            if direction == Direction.RIGHT:
-                eye1_pos = (screen_x + 14, screen_y + 6)
-                eye2_pos = (screen_x + 14, screen_y + 14)
-            elif direction == Direction.LEFT:
-                eye1_pos = (screen_x + 6, screen_y + 6)
-                eye2_pos = (screen_x + 6, screen_y + 14)
-            elif direction == Direction.UP:
-                eye1_pos = (screen_x + 6, screen_y + 6)
-                eye2_pos = (screen_x + 14, screen_y + 6)
-            else:  # DOWN
-                eye1_pos = (screen_x + 6, screen_y + 14)
-                eye2_pos = (screen_x + 14, screen_y + 14)
-            
-            pygame.draw.circle(self.screen, GameConstants.WHITE, eye1_pos, eye_size)
-            pygame.draw.circle(self.screen, GameConstants.WHITE, eye2_pos, eye_size)
-            pygame.draw.circle(self.screen, GameConstants.BLACK, eye1_pos, eye_size - 1)
-            pygame.draw.circle(self.screen, GameConstants.BLACK, eye2_pos, eye_size - 1)
-        else:
-            # Draw body segment with pattern
-            base_color = GameConstants.DARK_GREEN
-            if segment_index % 2 == 0:
-                base_color = (0, 100, 0)  # Slightly different shade for pattern
-            
-            pygame.draw.rect(self.screen, base_color, rect)
-            pygame.draw.rect(self.screen, GameConstants.GREEN, rect, 1)
-            
-            # Add small scale pattern
-            center_x = screen_x + GameConstants.CELL_SIZE // 2
-            center_y = screen_y + GameConstants.CELL_SIZE // 2
-            pygame.draw.circle(self.screen, (0, 80, 0), (center_x, center_y), 2)
+        # Snake body colors with gradient effect
+        base_radius = 9
+        if segment_index == len(segments) - 1:  # Tail
+            base_radius = 6
+        
+        # Main body color with gradient
+        body_colors = [
+            (34, 139, 34),   # Forest green (outer)
+            (50, 205, 50),   # Lime green (middle)
+            (60, 220, 60),   # Light green (inner)
+        ]
+        
+        # Draw layered circles for 3D effect
+        for i, color in enumerate(body_colors):
+            radius = base_radius - i * 2
+            if radius > 0:
+                pygame.draw.circle(self.screen, color, (center_x, center_y), radius)
+        
+        # Add realistic snake scale pattern
+        if segment_index % 2 == 0:
+            # Diamond scale pattern
+            scale_points = [
+                (center_x - 4, center_y),
+                (center_x, center_y - 3),
+                (center_x + 4, center_y),
+                (center_x, center_y + 3)
+            ]
+            pygame.draw.polygon(self.screen, (40, 160, 40), scale_points)
+        
+        # Add subtle highlight for roundness
+        highlight_x = center_x - 3
+        highlight_y = center_y - 3
+        pygame.draw.circle(self.screen, (80, 255, 80), (highlight_x, highlight_y), 2)
+    
+    def _draw_snake_head(self, x: int, y: int, direction: Direction):
+        """Draw a realistic snake head with proper shape and flickering tongue.
+        
+        Args:
+            x: Grid x position
+            y: Grid y position
+            direction: Snake's current direction
+        """
+        screen_x = GameConstants.PLAY_AREA_X + x * GameConstants.CELL_SIZE
+        screen_y = GameConstants.PLAY_AREA_Y + y * GameConstants.CELL_SIZE
+        center_x = screen_x + GameConstants.CELL_SIZE // 2
+        center_y = screen_y + GameConstants.CELL_SIZE // 2
+        
+        # Head shape - more elongated and realistic
+        head_width = 11
+        head_height = 13
+        
+        # Adjust head shape based on direction
+        if direction in [Direction.LEFT, Direction.RIGHT]:
+            head_width, head_height = head_height, head_width
+        
+        # Draw head with gradient layers
+        head_colors = [
+            (34, 139, 34),   # Dark green (outer)
+            (50, 205, 50),   # Medium green (middle)
+            (70, 230, 70),   # Light green (inner)
+        ]
+        
+        for i, color in enumerate(head_colors):
+            width = head_width - i * 2
+            height = head_height - i * 2
+            if width > 0 and height > 0:
+                head_rect = pygame.Rect(
+                    center_x - width // 2,
+                    center_y - height // 2,
+                    width,
+                    height
+                )
+                pygame.draw.ellipse(self.screen, color, head_rect)
+        
+        # Draw realistic eyes
+        self._draw_snake_eyes(center_x, center_y, direction)
+        
+        # Draw flickering tongue
+        self._draw_snake_tongue(center_x, center_y, direction)
+        
+        # Add nostril details
+        self._draw_snake_nostrils(center_x, center_y, direction)
+    
+    def _draw_snake_eyes(self, center_x: int, center_y: int, direction: Direction):
+        """Draw realistic snake eyes with proper positioning.
+        
+        Args:
+            center_x: Head center x position
+            center_y: Head center y position
+            direction: Snake's current direction
+        """
+        eye_size = 4
+        pupil_size = 2
+        
+        # Position eyes based on direction
+        if direction == Direction.RIGHT:
+            eye1_pos = (center_x + 3, center_y - 4)
+            eye2_pos = (center_x + 3, center_y + 4)
+        elif direction == Direction.LEFT:
+            eye1_pos = (center_x - 3, center_y - 4)
+            eye2_pos = (center_x - 3, center_y + 4)
+        elif direction == Direction.UP:
+            eye1_pos = (center_x - 4, center_y - 3)
+            eye2_pos = (center_x + 4, center_y - 3)
+        else:  # DOWN
+            eye1_pos = (center_x - 4, center_y + 3)
+            eye2_pos = (center_x + 4, center_y + 3)
+        
+        # Draw eyes with realistic colors
+        for eye_pos in [eye1_pos, eye2_pos]:
+            # Eye white
+            pygame.draw.circle(self.screen, (255, 255, 200), eye_pos, eye_size)
+            # Eye iris (yellow-green)
+            pygame.draw.circle(self.screen, (200, 255, 100), eye_pos, eye_size - 1)
+            # Vertical pupil (like real snakes)
+            pupil_rect = pygame.Rect(eye_pos[0] - 1, eye_pos[1] - pupil_size, 2, pupil_size * 2)
+            pygame.draw.ellipse(self.screen, (0, 0, 0), pupil_rect)
+            # Eye shine
+            pygame.draw.circle(self.screen, (255, 255, 255), (eye_pos[0] - 1, eye_pos[1] - 1), 1)
+    
+    def _draw_snake_tongue(self, center_x: int, center_y: int, direction: Direction):
+        """Draw a flickering forked tongue.
+        
+        Args:
+            center_x: Head center x position
+            center_y: Head center y position
+            direction: Snake's current direction
+        """
+        # Tongue flickers based on time
+        time_ms = pygame.time.get_ticks()
+        tongue_visible = (time_ms // 300) % 3 != 0  # Flicker pattern
+        
+        if not tongue_visible:
+            return
+        
+        tongue_length = 8
+        tongue_color = (220, 20, 60)  # Red tongue
+        
+        # Position tongue based on direction
+        if direction == Direction.RIGHT:
+            tongue_start = (center_x + 6, center_y)
+            tongue_end = (center_x + 6 + tongue_length, center_y)
+            fork1_end = (center_x + 6 + tongue_length, center_y - 2)
+            fork2_end = (center_x + 6 + tongue_length, center_y + 2)
+        elif direction == Direction.LEFT:
+            tongue_start = (center_x - 6, center_y)
+            tongue_end = (center_x - 6 - tongue_length, center_y)
+            fork1_end = (center_x - 6 - tongue_length, center_y - 2)
+            fork2_end = (center_x - 6 - tongue_length, center_y + 2)
+        elif direction == Direction.UP:
+            tongue_start = (center_x, center_y - 6)
+            tongue_end = (center_x, center_y - 6 - tongue_length)
+            fork1_end = (center_x - 2, center_y - 6 - tongue_length)
+            fork2_end = (center_x + 2, center_y - 6 - tongue_length)
+        else:  # DOWN
+            tongue_start = (center_x, center_y + 6)
+            tongue_end = (center_x, center_y + 6 + tongue_length)
+            fork1_end = (center_x - 2, center_y + 6 + tongue_length)
+            fork2_end = (center_x + 2, center_y + 6 + tongue_length)
+        
+        # Draw main tongue
+        pygame.draw.line(self.screen, tongue_color, tongue_start, tongue_end, 2)
+        
+        # Draw forked tip
+        pygame.draw.line(self.screen, tongue_color, tongue_end, fork1_end, 1)
+        pygame.draw.line(self.screen, tongue_color, tongue_end, fork2_end, 1)
+    
+    def _draw_snake_nostrils(self, center_x: int, center_y: int, direction: Direction):
+        """Draw small nostril details.
+        
+        Args:
+            center_x: Head center x position
+            center_y: Head center y position
+            direction: Snake's current direction
+        """
+        nostril_color = (20, 80, 20)  # Dark green
+        
+        # Position nostrils based on direction
+        if direction == Direction.RIGHT:
+            nostril1_pos = (center_x + 5, center_y - 2)
+            nostril2_pos = (center_x + 5, center_y + 2)
+        elif direction == Direction.LEFT:
+            nostril1_pos = (center_x - 5, center_y - 2)
+            nostril2_pos = (center_x - 5, center_y + 2)
+        elif direction == Direction.UP:
+            nostril1_pos = (center_x - 2, center_y - 5)
+            nostril2_pos = (center_x + 2, center_y - 5)
+        else:  # DOWN
+            nostril1_pos = (center_x - 2, center_y + 5)
+            nostril2_pos = (center_x + 2, center_y + 5)
+        
+        # Draw tiny nostrils
+        pygame.draw.circle(self.screen, nostril_color, nostril1_pos, 1)
+        pygame.draw.circle(self.screen, nostril_color, nostril2_pos, 1)
     
     def _draw_fruit(self, fruit: Fruit):
         """Draw a fruit using high-quality emoji images when available.
