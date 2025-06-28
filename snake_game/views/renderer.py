@@ -449,7 +449,7 @@ class GameRenderer:
         self._draw_smooth_snake_body(smooth_points, segments)
     
     def _create_smooth_snake_path(self, points: list):
-        """Create a smooth path through the snake segments.
+        """Create a completely smooth path through the snake segments with proper arcing.
         
         Args:
             points: List of screen coordinate points
@@ -457,64 +457,137 @@ class GameRenderer:
         Returns:
             List of smoothed points for drawing
         """
-        if len(points) < 3:
+        if len(points) < 2:
             return points
         
-        smooth_points = [points[0]]  # Start with head
+        if len(points) == 2:
+            # For short snake, interpolate between head and tail
+            return self._interpolate_points(points[0], points[1], 5)
         
-        # Create smooth curves between segments
-        for i in range(1, len(points) - 1):
-            prev_point = points[i - 1]
-            curr_point = points[i]
-            next_point = points[i + 1]
+        smooth_points = []
+        
+        # Start with head
+        smooth_points.append(points[0])
+        
+        # Create smooth curves between all segments
+        for i in range(len(points) - 1):
+            start_point = points[i]
+            end_point = points[i + 1]
             
-            # Calculate smooth curve points around corners
-            curve_points = self._calculate_corner_curve(prev_point, curr_point, next_point)
-            smooth_points.extend(curve_points)
+            # Get context points for better curve calculation
+            prev_point = points[i - 1] if i > 0 else None
+            next_point = points[i + 2] if i + 2 < len(points) else None
+            
+            # Create smooth interpolation between segments
+            if i == len(points) - 2:  # Last segment
+                # Simple interpolation to tail
+                interpolated = self._interpolate_points(start_point, end_point, 8)
+                smooth_points.extend(interpolated[1:])  # Skip first point (already added)
+            else:
+                # Create curved path considering neighboring segments
+                curved_points = self._create_curved_segment(start_point, end_point, prev_point, next_point)
+                smooth_points.extend(curved_points[1:])  # Skip first point (already added)
         
-        smooth_points.append(points[-1])  # End with tail
         return smooth_points
     
-    def _calculate_corner_curve(self, prev_point, curr_point, next_point):
-        """Calculate smooth curve points for a corner.
+    def _interpolate_points(self, start_point, end_point, num_points):
+        """Create smooth interpolation between two points.
         
         Args:
-            prev_point: Previous segment center
-            curr_point: Current segment center  
-            next_point: Next segment center
+            start_point: Starting point (x, y)
+            end_point: Ending point (x, y)
+            num_points: Number of interpolation points
+            
+        Returns:
+            List of interpolated points
+        """
+        points = []
+        for i in range(num_points):
+            t = i / (num_points - 1)
+            x = int(start_point[0] + (end_point[0] - start_point[0]) * t)
+            y = int(start_point[1] + (end_point[1] - start_point[1]) * t)
+            points.append((x, y))
+        return points
+    
+    def _create_curved_segment(self, start_point, end_point, prev_point, next_point):
+        """Create a curved segment with proper arcing for corners.
+        
+        Args:
+            start_point: Current segment start
+            end_point: Current segment end
+            prev_point: Previous segment (for curve context)
+            next_point: Next segment (for curve context)
             
         Returns:
             List of points forming a smooth curve
         """
+        # Number of interpolation points for smoothness
+        num_points = 12
         curve_points = []
         
-        # Vector from previous to current
-        dx1 = curr_point[0] - prev_point[0]
-        dy1 = curr_point[1] - prev_point[1]
-        
-        # Vector from current to next
-        dx2 = next_point[0] - curr_point[0]
-        dy2 = next_point[1] - curr_point[1]
-        
-        # If it's a straight line, just add the current point
-        if (dx1 == dx2 and dy1 == dy2) or (dx1 == 0 and dy1 == 0) or (dx2 == 0 and dy2 == 0):
-            curve_points.append(curr_point)
-            return curve_points
-        
-        # Create smooth corner with multiple points
-        corner_radius = GameConstants.CELL_SIZE // 3
-        
-        # Calculate curve points
-        for t in [0.3, 0.5, 0.7]:  # Smooth interpolation
-            # Bezier-like curve calculation
-            x = int(curr_point[0] + (dx1 * (1-t) + dx2 * t) * 0.3)
-            y = int(curr_point[1] + (dy1 * (1-t) + dy2 * t) * 0.3)
-            curve_points.append((x, y))
+        for i in range(num_points):
+            t = i / (num_points - 1)
+            
+            # Use Catmull-Rom spline for smooth curves
+            if prev_point and next_point:
+                # Full spline with 4 control points
+                point = self._catmull_rom_spline(prev_point, start_point, end_point, next_point, t)
+            else:
+                # Simple interpolation with curve bias
+                # Add slight curve even without full context
+                mid_x = (start_point[0] + end_point[0]) / 2
+                mid_y = (start_point[1] + end_point[1]) / 2
+                
+                # Create slight arc
+                curve_factor = 0.2 * math.sin(t * math.pi)
+                
+                # Perpendicular offset for curve
+                dx = end_point[0] - start_point[0]
+                dy = end_point[1] - start_point[1]
+                length = math.sqrt(dx*dx + dy*dy)
+                
+                if length > 0:
+                    perp_x = -dy / length * curve_factor * 10
+                    perp_y = dx / length * curve_factor * 10
+                else:
+                    perp_x = perp_y = 0
+                
+                x = int(start_point[0] + (end_point[0] - start_point[0]) * t + perp_x)
+                y = int(start_point[1] + (end_point[1] - start_point[1]) * t + perp_y)
+                point = (x, y)
+            
+            curve_points.append(point)
         
         return curve_points
     
+    def _catmull_rom_spline(self, p0, p1, p2, p3, t):
+        """Calculate Catmull-Rom spline point for ultra-smooth curves.
+        
+        Args:
+            p0, p1, p2, p3: Control points
+            t: Parameter (0 to 1)
+            
+        Returns:
+            Interpolated point (x, y)
+        """
+        t2 = t * t
+        t3 = t2 * t
+        
+        # Catmull-Rom spline formula
+        x = 0.5 * ((2 * p1[0]) +
+                   (-p0[0] + p2[0]) * t +
+                   (2 * p0[0] - 5 * p1[0] + 4 * p2[0] - p3[0]) * t2 +
+                   (-p0[0] + 3 * p1[0] - 3 * p2[0] + p3[0]) * t3)
+        
+        y = 0.5 * ((2 * p1[1]) +
+                   (-p0[1] + p2[1]) * t +
+                   (2 * p0[1] - 5 * p1[1] + 4 * p2[1] - p3[1]) * t2 +
+                   (-p0[1] + 3 * p1[1] - 3 * p2[1] + p3[1]) * t3)
+        
+        return (int(x), int(y))
+    
     def _draw_smooth_snake_body(self, points: list, segments: list):
-        """Draw the snake body as a smooth, continuous shape.
+        """Draw the snake body as a completely smooth, shaded shape.
         
         Args:
             points: Smoothed path points
@@ -523,35 +596,88 @@ class GameRenderer:
         if len(points) < 2:
             return
         
-        # Draw the snake body with varying thickness and colors
+        # Draw the snake body with smooth thickness transitions and shading
         for i in range(len(points) - 1):
             start_point = points[i]
             end_point = points[i + 1]
             
-            # Calculate thickness based on position (thicker at head, thinner at tail)
+            # Calculate smooth thickness progression
             progress = i / max(1, len(points) - 1)
-            base_thickness = 10
-            thickness = int(base_thickness * (1.0 - progress * 0.4))  # Taper toward tail
+            base_thickness = 12
+            thickness = max(4, int(base_thickness * (1.0 - progress * 0.5)))  # Smooth taper
             
-            # Calculate colors with gradient
-            color_progress = progress
-            base_green = int(34 + (50 - 34) * (1 - color_progress))
-            mid_green = int(139 + (205 - 139) * (1 - color_progress))
-            light_green = int(34 + (60 - 34) * (1 - color_progress))
-            
-            # Draw multiple layers for 3D effect
-            colors_and_thickness = [
-                ((base_green, mid_green, base_green), thickness),
-                ((50, 205, 50), thickness - 2),
-                ((70, 230, 70), thickness - 4),
-            ]
-            
-            for color, thick in colors_and_thickness:
-                if thick > 0:
-                    self._draw_thick_line(start_point, end_point, color, thick)
+            # Draw multiple layers for realistic shading
+            self._draw_shaded_segment(start_point, end_point, thickness, progress)
+    
+    def _draw_shaded_segment(self, start_point, end_point, thickness, progress):
+        """Draw a single segment with realistic shading and depth.
         
-        # Add scale pattern along the body
-        self._draw_snake_scales(points)
+        Args:
+            start_point: Starting point (x, y)
+            end_point: Ending point (x, y)
+            thickness: Segment thickness
+            progress: Position along snake (0=head, 1=tail)
+        """
+        # Calculate segment direction for shading
+        dx = end_point[0] - start_point[0]
+        dy = end_point[1] - start_point[1]
+        length = math.sqrt(dx*dx + dy*dy)
+        
+        if length == 0:
+            return
+        
+        # Normalize direction
+        norm_dx = dx / length
+        norm_dy = dy / length
+        
+        # Perpendicular vector for width
+        perp_x = -norm_dy
+        perp_y = norm_dx
+        
+        # Color progression from head to tail
+        base_intensity = 1.0 - progress * 0.3
+        
+        # Multiple shading layers for 3D effect
+        shading_layers = [
+            # Shadow side (darker)
+            {
+                'color': (int(25 * base_intensity), int(100 * base_intensity), int(25 * base_intensity)),
+                'offset': (-0.3, -0.3),
+                'thickness_mult': 1.0
+            },
+            # Main body
+            {
+                'color': (int(34 * base_intensity), int(139 * base_intensity), int(34 * base_intensity)),
+                'offset': (0, 0),
+                'thickness_mult': 0.9
+            },
+            # Highlight side (lighter)
+            {
+                'color': (int(50 * base_intensity), int(205 * base_intensity), int(50 * base_intensity)),
+                'offset': (0.2, 0.2),
+                'thickness_mult': 0.7
+            },
+            # Top highlight
+            {
+                'color': (int(70 * base_intensity), int(230 * base_intensity), int(70 * base_intensity)),
+                'offset': (0.3, 0.3),
+                'thickness_mult': 0.4
+            }
+        ]
+        
+        # Draw each shading layer
+        for layer in shading_layers:
+            layer_thickness = max(1, int(thickness * layer['thickness_mult']))
+            
+            # Offset points for shading effect
+            offset_x = layer['offset'][0] * thickness * 0.2
+            offset_y = layer['offset'][1] * thickness * 0.2
+            
+            offset_start = (int(start_point[0] + offset_x), int(start_point[1] + offset_y))
+            offset_end = (int(end_point[0] + offset_x), int(end_point[1] + offset_y))
+            
+            # Draw the layer
+            self._draw_thick_line(offset_start, offset_end, layer['color'], layer_thickness)
     
     def _draw_thick_line(self, start_point, end_point, color, thickness):
         """Draw a thick line between two points with rounded ends.
@@ -562,14 +688,18 @@ class GameRenderer:
             color: Line color
             thickness: Line thickness
         """
+        if thickness <= 0:
+            return
+            
         # Draw the main line
         if thickness > 1:
             pygame.draw.line(self.screen, color, start_point, end_point, thickness)
             
-            # Draw rounded end caps
+            # Draw rounded end caps for seamless connections
             radius = thickness // 2
-            pygame.draw.circle(self.screen, color, start_point, radius)
-            pygame.draw.circle(self.screen, color, end_point, radius)
+            if radius > 0:
+                pygame.draw.circle(self.screen, color, start_point, radius)
+                pygame.draw.circle(self.screen, color, end_point, radius)
     
     def _draw_snake_scales(self, points: list):
         """Draw scale patterns along the snake body.
@@ -577,21 +707,35 @@ class GameRenderer:
         Args:
             points: Path points along the snake body
         """
-        scale_spacing = 15  # Distance between scales
+        scale_spacing = 20  # Distance between scales
         
         for i in range(0, len(points) - 1, scale_spacing):
             if i + 1 < len(points):
                 point = points[i]
                 
-                # Draw small diamond scale
-                scale_size = 3
+                # Calculate scale size based on position (smaller toward tail)
+                progress = i / max(1, len(points) - 1)
+                scale_size = max(2, int(4 * (1.0 - progress * 0.5)))
+                
+                # Draw diamond scale with subtle color
+                scale_color = (40, 160, 40, 128)  # Semi-transparent
                 scale_points = [
                     (point[0] - scale_size, point[1]),
                     (point[0], point[1] - scale_size),
                     (point[0] + scale_size, point[1]),
                     (point[0], point[1] + scale_size)
                 ]
-                pygame.draw.polygon(self.screen, (40, 160, 40), scale_points)
+                
+                # Create surface for alpha blending
+                scale_surface = pygame.Surface((scale_size * 2 + 1, scale_size * 2 + 1), pygame.SRCALPHA)
+                pygame.draw.polygon(scale_surface, scale_color, [
+                    (scale_size, 0),
+                    (0, scale_size),
+                    (scale_size, scale_size * 2),
+                    (scale_size * 2, scale_size)
+                ])
+                
+                self.screen.blit(scale_surface, (point[0] - scale_size, point[1] - scale_size))
     
     def _draw_snake_head(self, x: int, y: int, direction: Direction):
         """Draw a realistic snake head with proper shape and flickering tongue.
