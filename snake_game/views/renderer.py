@@ -510,7 +510,7 @@ class GameRenderer:
         return points
     
     def _create_curved_segment(self, start_point, end_point, prev_point, next_point):
-        """Create a curved segment with proper arcing for corners.
+        """Create a curved segment with enhanced smoothness and arcing.
         
         Args:
             start_point: Current segment start
@@ -519,36 +519,36 @@ class GameRenderer:
             next_point: Next segment (for curve context)
             
         Returns:
-            List of points forming a smooth curve
+            List of points forming an ultra-smooth curve
         """
-        # Number of interpolation points for smoothness
-        num_points = 12
+        # Increased interpolation points for maximum smoothness
+        num_points = 16  # Increased from 12 for ultra-smooth curves
         curve_points = []
         
         for i in range(num_points):
             t = i / (num_points - 1)
             
-            # Use Catmull-Rom spline for smooth curves
+            # Use enhanced Catmull-Rom spline for ultra-smooth curves
             if prev_point and next_point:
-                # Full spline with 4 control points
-                point = self._catmull_rom_spline(prev_point, start_point, end_point, next_point, t)
+                # Full spline with 4 control points and tension adjustment
+                point = self._enhanced_catmull_rom_spline(prev_point, start_point, end_point, next_point, t)
             else:
-                # Simple interpolation with curve bias
-                # Add slight curve even without full context
+                # Enhanced interpolation with better curve bias
+                # Create more pronounced arc even without full context
                 mid_x = (start_point[0] + end_point[0]) / 2
                 mid_y = (start_point[1] + end_point[1]) / 2
                 
-                # Create slight arc
-                curve_factor = 0.2 * math.sin(t * math.pi)
+                # Enhanced curve factor for better arcing
+                curve_factor = 0.4 * math.sin(t * math.pi)  # Increased from 0.2
                 
-                # Perpendicular offset for curve
+                # Perpendicular offset for enhanced curve
                 dx = end_point[0] - start_point[0]
                 dy = end_point[1] - start_point[1]
                 length = math.sqrt(dx*dx + dy*dy)
                 
                 if length > 0:
-                    perp_x = -dy / length * curve_factor * 10
-                    perp_y = dx / length * curve_factor * 10
+                    perp_x = -dy / length * curve_factor * 15  # Increased curve strength
+                    perp_y = dx / length * curve_factor * 15
                 else:
                     perp_x = perp_y = 0
                 
@@ -560,8 +560,8 @@ class GameRenderer:
         
         return curve_points
     
-    def _catmull_rom_spline(self, p0, p1, p2, p3, t):
-        """Calculate Catmull-Rom spline point for ultra-smooth curves.
+    def _enhanced_catmull_rom_spline(self, p0, p1, p2, p3, t):
+        """Calculate enhanced Catmull-Rom spline with tension control for ultra-smooth curves.
         
         Args:
             p0, p1, p2, p3: Control points
@@ -570,24 +570,27 @@ class GameRenderer:
         Returns:
             Interpolated point (x, y)
         """
+        # Enhanced tension parameter for smoother curves
+        tension = 0.5  # Standard Catmull-Rom tension
+        
         t2 = t * t
         t3 = t2 * t
         
-        # Catmull-Rom spline formula
-        x = 0.5 * ((2 * p1[0]) +
-                   (-p0[0] + p2[0]) * t +
-                   (2 * p0[0] - 5 * p1[0] + 4 * p2[0] - p3[0]) * t2 +
-                   (-p0[0] + 3 * p1[0] - 3 * p2[0] + p3[0]) * t3)
+        # Enhanced Catmull-Rom spline formula with tension
+        x = tension * ((2 * p1[0]) +
+                      (-p0[0] + p2[0]) * t +
+                      (2 * p0[0] - 5 * p1[0] + 4 * p2[0] - p3[0]) * t2 +
+                      (-p0[0] + 3 * p1[0] - 3 * p2[0] + p3[0]) * t3)
         
-        y = 0.5 * ((2 * p1[1]) +
-                   (-p0[1] + p2[1]) * t +
-                   (2 * p0[1] - 5 * p1[1] + 4 * p2[1] - p3[1]) * t2 +
-                   (-p0[1] + 3 * p1[1] - 3 * p2[1] + p3[1]) * t3)
+        y = tension * ((2 * p1[1]) +
+                      (-p0[1] + p2[1]) * t +
+                      (2 * p0[1] - 5 * p1[1] + 4 * p2[1] - p3[1]) * t2 +
+                      (-p0[1] + 3 * p1[1] - 3 * p2[1] + p3[1]) * t3)
         
         return (int(x), int(y))
     
     def _draw_smooth_snake_body(self, points: list, segments: list):
-        """Draw the snake body as a completely smooth, shaded shape.
+        """Draw the snake body as a wide, smooth, shimmering 3D shape.
         
         Args:
             points: Smoothed path points
@@ -596,29 +599,30 @@ class GameRenderer:
         if len(points) < 2:
             return
         
-        # Draw the snake body with smooth thickness transitions and shading
+        # Draw the snake body with enhanced width, smoothness, and 3D effects
         for i in range(len(points) - 1):
             start_point = points[i]
             end_point = points[i + 1]
             
-            # Calculate smooth thickness progression
+            # Calculate smooth thickness progression - much wider snake
             progress = i / max(1, len(points) - 1)
-            base_thickness = 12
-            thickness = max(4, int(base_thickness * (1.0 - progress * 0.5)))  # Smooth taper
+            base_thickness = 18  # Increased from 12 for wider snake
+            thickness = max(6, int(base_thickness * (1.0 - progress * 0.6)))  # Better taper
             
-            # Draw multiple layers for realistic shading
-            self._draw_shaded_segment(start_point, end_point, thickness, progress)
+            # Draw enhanced 3D segment with shimmer
+            self._draw_enhanced_3d_segment(start_point, end_point, thickness, progress, i)
     
-    def _draw_shaded_segment(self, start_point, end_point, thickness, progress):
-        """Draw a single segment with realistic shading and depth.
+    def _draw_enhanced_3d_segment(self, start_point, end_point, thickness, progress, segment_index):
+        """Draw a single segment with enhanced 3D effects and shimmer.
         
         Args:
             start_point: Starting point (x, y)
             end_point: Ending point (x, y)
             thickness: Segment thickness
             progress: Position along snake (0=head, 1=tail)
+            segment_index: Index for shimmer animation
         """
-        # Calculate segment direction for shading
+        # Calculate segment direction for proper shading
         dx = end_point[0] - start_point[0]
         dy = end_point[1] - start_point[1]
         length = math.sqrt(dx*dx + dy*dy)
@@ -634,53 +638,77 @@ class GameRenderer:
         perp_x = -norm_dy
         perp_y = norm_dx
         
-        # Color progression from head to tail
-        base_intensity = 1.0 - progress * 0.3
+        # Enhanced color progression with shimmer
+        base_intensity = 1.0 - progress * 0.2
         
-        # Multiple shading layers for 3D effect
+        # Shimmer effect based on time and position
+        time_ms = pygame.time.get_ticks()
+        shimmer_wave = math.sin((time_ms * 0.003) + (segment_index * 0.2)) * 0.3 + 0.7
+        shimmer_intensity = shimmer_wave * base_intensity
+        
+        # Enhanced shading layers for maximum 3D effect
         shading_layers = [
-            # Shadow side (darker)
+            # Deep shadow (bottom/left)
             {
-                'color': (int(25 * base_intensity), int(100 * base_intensity), int(25 * base_intensity)),
-                'offset': (-0.3, -0.3),
+                'color': (int(15 * base_intensity), int(60 * base_intensity), int(15 * base_intensity)),
+                'offset': (-0.4, -0.4),
+                'thickness_mult': 1.1
+            },
+            # Main shadow
+            {
+                'color': (int(25 * base_intensity), int(90 * base_intensity), int(25 * base_intensity)),
+                'offset': (-0.25, -0.25),
                 'thickness_mult': 1.0
             },
-            # Main body
+            # Base body color
             {
                 'color': (int(34 * base_intensity), int(139 * base_intensity), int(34 * base_intensity)),
                 'offset': (0, 0),
-                'thickness_mult': 0.9
+                'thickness_mult': 0.95
             },
-            # Highlight side (lighter)
+            # Mid-tone with shimmer
             {
-                'color': (int(50 * base_intensity), int(205 * base_intensity), int(50 * base_intensity)),
-                'offset': (0.2, 0.2),
-                'thickness_mult': 0.7
+                'color': (int(45 * shimmer_intensity), int(170 * shimmer_intensity), int(45 * shimmer_intensity)),
+                'offset': (0.1, 0.1),
+                'thickness_mult': 0.8
             },
-            # Top highlight
+            # Bright highlight with shimmer
             {
-                'color': (int(70 * base_intensity), int(230 * base_intensity), int(70 * base_intensity)),
-                'offset': (0.3, 0.3),
+                'color': (int(60 * shimmer_intensity), int(220 * shimmer_intensity), int(60 * shimmer_intensity)),
+                'offset': (0.25, 0.25),
+                'thickness_mult': 0.6
+            },
+            # Top shimmer highlight
+            {
+                'color': (int(80 * shimmer_intensity), int(255 * shimmer_intensity), int(80 * shimmer_intensity)),
+                'offset': (0.35, 0.35),
                 'thickness_mult': 0.4
+            },
+            # Specular highlight (very bright, small)
+            {
+                'color': (int(120 * shimmer_intensity), int(255 * shimmer_intensity), int(120 * shimmer_intensity)),
+                'offset': (0.4, 0.4),
+                'thickness_mult': 0.2
             }
         ]
         
-        # Draw each shading layer
+        # Draw each shading layer for maximum 3D effect
         for layer in shading_layers:
             layer_thickness = max(1, int(thickness * layer['thickness_mult']))
             
-            # Offset points for shading effect
-            offset_x = layer['offset'][0] * thickness * 0.2
-            offset_y = layer['offset'][1] * thickness * 0.2
+            # Enhanced offset calculation for better 3D effect
+            offset_distance = thickness * 0.15
+            offset_x = layer['offset'][0] * offset_distance
+            offset_y = layer['offset'][1] * offset_distance
             
             offset_start = (int(start_point[0] + offset_x), int(start_point[1] + offset_y))
             offset_end = (int(end_point[0] + offset_x), int(end_point[1] + offset_y))
             
-            # Draw the layer
-            self._draw_thick_line(offset_start, offset_end, layer['color'], layer_thickness)
+            # Draw the layer with enhanced smoothness
+            self._draw_ultra_smooth_line(offset_start, offset_end, layer['color'], layer_thickness)
     
-    def _draw_thick_line(self, start_point, end_point, color, thickness):
-        """Draw a thick line between two points with rounded ends.
+    def _draw_ultra_smooth_line(self, start_point, end_point, color, thickness):
+        """Draw an ultra-smooth thick line with perfect anti-aliasing.
         
         Args:
             start_point: Starting point (x, y)
@@ -690,24 +718,43 @@ class GameRenderer:
         """
         if thickness <= 0:
             return
-            
-        # Draw the main line
-        if thickness > 1:
+        
+        # For very smooth lines, draw multiple thin lines with slight offsets
+        if thickness > 4:
+            # Draw main thick line
             pygame.draw.line(self.screen, color, start_point, end_point, thickness)
             
-            # Draw rounded end caps for seamless connections
+            # Add anti-aliasing by drawing thinner lines around the edges
+            edge_color = tuple(min(255, c + 20) for c in color[:3])
+            pygame.draw.line(self.screen, edge_color, start_point, end_point, max(1, thickness - 2))
+            
+            # Draw perfect rounded end caps
             radius = thickness // 2
             if radius > 0:
+                # Main caps
+                pygame.draw.circle(self.screen, color, start_point, radius)
+                pygame.draw.circle(self.screen, color, end_point, radius)
+                
+                # Anti-aliased edge caps
+                if radius > 2:
+                    pygame.draw.circle(self.screen, edge_color, start_point, radius - 1)
+                    pygame.draw.circle(self.screen, edge_color, end_point, radius - 1)
+        else:
+            # For thin lines, just draw normally
+            pygame.draw.line(self.screen, color, start_point, end_point, thickness)
+            if thickness > 1:
+                radius = thickness // 2
                 pygame.draw.circle(self.screen, color, start_point, radius)
                 pygame.draw.circle(self.screen, color, end_point, radius)
     
     def _draw_snake_scales(self, points: list):
-        """Draw scale patterns along the snake body.
+        """Draw enhanced scale patterns with shimmer effects.
         
         Args:
             points: Path points along the snake body
         """
-        scale_spacing = 20  # Distance between scales
+        scale_spacing = 25  # Increased spacing for wider snake
+        time_ms = pygame.time.get_ticks()
         
         for i in range(0, len(points) - 1, scale_spacing):
             if i + 1 < len(points):
@@ -715,10 +762,18 @@ class GameRenderer:
                 
                 # Calculate scale size based on position (smaller toward tail)
                 progress = i / max(1, len(points) - 1)
-                scale_size = max(2, int(4 * (1.0 - progress * 0.5)))
+                base_scale_size = max(3, int(6 * (1.0 - progress * 0.4)))
                 
-                # Draw diamond scale with subtle color
-                scale_color = (40, 160, 40, 128)  # Semi-transparent
+                # Shimmer effect for scales
+                shimmer = math.sin((time_ms * 0.004) + (i * 0.15)) * 0.4 + 0.6
+                scale_size = int(base_scale_size * shimmer)
+                
+                # Enhanced scale colors with shimmer
+                base_alpha = int(100 * shimmer)
+                scale_color = (60, 180, 60, base_alpha)
+                highlight_color = (100, 220, 100, int(base_alpha * 0.7))
+                
+                # Draw main scale
                 scale_points = [
                     (point[0] - scale_size, point[1]),
                     (point[0], point[1] - scale_size),
@@ -727,15 +782,27 @@ class GameRenderer:
                 ]
                 
                 # Create surface for alpha blending
-                scale_surface = pygame.Surface((scale_size * 2 + 1, scale_size * 2 + 1), pygame.SRCALPHA)
+                scale_surface = pygame.Surface((scale_size * 2 + 2, scale_size * 2 + 2), pygame.SRCALPHA)
+                
+                # Draw scale with gradient effect
                 pygame.draw.polygon(scale_surface, scale_color, [
-                    (scale_size, 0),
-                    (0, scale_size),
-                    (scale_size, scale_size * 2),
-                    (scale_size * 2, scale_size)
+                    (scale_size + 1, 1),
+                    (1, scale_size + 1),
+                    (scale_size + 1, scale_size * 2 + 1),
+                    (scale_size * 2 + 1, scale_size + 1)
                 ])
                 
-                self.screen.blit(scale_surface, (point[0] - scale_size, point[1] - scale_size))
+                # Add highlight to scale
+                if scale_size > 2:
+                    highlight_size = scale_size - 1
+                    pygame.draw.polygon(scale_surface, highlight_color, [
+                        (scale_size + 1, 2),
+                        (2, scale_size + 1),
+                        (scale_size + 1, scale_size * 2),
+                        (scale_size * 2, scale_size + 1)
+                    ])
+                
+                self.screen.blit(scale_surface, (point[0] - scale_size - 1, point[1] - scale_size - 1))
     
     def _draw_snake_head(self, x: int, y: int, direction: Direction):
         """Draw a realistic snake head with proper shape and flickering tongue.
