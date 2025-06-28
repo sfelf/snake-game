@@ -407,68 +407,191 @@ class GameRenderer:
         pygame.draw.rect(self.screen, GameConstants.BLACK, play_rect)
     
     def _draw_snake(self, snake: Snake):
-        """Draw the snake with realistic, high-resolution graphics.
+        """Draw the snake as a single, continuous, smooth shape.
         
         Args:
             snake: Snake object to draw
         """
-        # Draw body segments first (back to front)
-        for i in range(len(snake.segments) - 1, 0, -1):
-            x, y = snake.segments[i]
-            self._draw_snake_body_segment(x, y, i, snake.segments)
+        if len(snake.segments) < 2:
+            # If only head, draw it normally
+            if snake.segments:
+                head_x, head_y = snake.segments[0]
+                self._draw_snake_head(head_x, head_y, snake.direction)
+            return
+        
+        # Draw the continuous snake body
+        self._draw_continuous_snake_body(snake.segments)
         
         # Draw head last (on top)
-        if snake.segments:
-            head_x, head_y = snake.segments[0]
-            self._draw_snake_head(head_x, head_y, snake.direction)
+        head_x, head_y = snake.segments[0]
+        self._draw_snake_head(head_x, head_y, snake.direction)
     
-    def _draw_snake_body_segment(self, x: int, y: int, segment_index: int, segments: list):
-        """Draw a realistic rounded snake body segment.
+    def _draw_continuous_snake_body(self, segments: list):
+        """Draw the snake as a single continuous, smooth shape.
         
         Args:
-            x: Grid x position
-            y: Grid y position
-            segment_index: Index of the segment
-            segments: All snake segments for connection logic
+            segments: List of snake segment positions
         """
-        screen_x = GameConstants.PLAY_AREA_X + x * GameConstants.CELL_SIZE
-        screen_y = GameConstants.PLAY_AREA_Y + y * GameConstants.CELL_SIZE
-        center_x = screen_x + GameConstants.CELL_SIZE // 2
-        center_y = screen_y + GameConstants.CELL_SIZE // 2
+        if len(segments) < 2:
+            return
         
-        # Snake body colors with gradient effect
-        base_radius = 9
-        if segment_index == len(segments) - 1:  # Tail
-            base_radius = 6
+        # Convert grid positions to screen coordinates
+        screen_points = []
+        for x, y in segments:
+            screen_x = GameConstants.PLAY_AREA_X + x * GameConstants.CELL_SIZE + GameConstants.CELL_SIZE // 2
+            screen_y = GameConstants.PLAY_AREA_Y + y * GameConstants.CELL_SIZE + GameConstants.CELL_SIZE // 2
+            screen_points.append((screen_x, screen_y))
         
-        # Main body color with gradient
-        body_colors = [
-            (34, 139, 34),   # Forest green (outer)
-            (50, 205, 50),   # Lime green (middle)
-            (60, 220, 60),   # Light green (inner)
-        ]
+        # Create smooth path points for the snake body
+        smooth_points = self._create_smooth_snake_path(screen_points)
         
-        # Draw layered circles for 3D effect
-        for i, color in enumerate(body_colors):
-            radius = base_radius - i * 2
-            if radius > 0:
-                pygame.draw.circle(self.screen, color, (center_x, center_y), radius)
+        # Draw the continuous snake body with varying thickness
+        self._draw_smooth_snake_body(smooth_points, segments)
+    
+    def _create_smooth_snake_path(self, points: list):
+        """Create a smooth path through the snake segments.
         
-        # Add realistic snake scale pattern
-        if segment_index % 2 == 0:
-            # Diamond scale pattern
-            scale_points = [
-                (center_x - 4, center_y),
-                (center_x, center_y - 3),
-                (center_x + 4, center_y),
-                (center_x, center_y + 3)
+        Args:
+            points: List of screen coordinate points
+            
+        Returns:
+            List of smoothed points for drawing
+        """
+        if len(points) < 3:
+            return points
+        
+        smooth_points = [points[0]]  # Start with head
+        
+        # Create smooth curves between segments
+        for i in range(1, len(points) - 1):
+            prev_point = points[i - 1]
+            curr_point = points[i]
+            next_point = points[i + 1]
+            
+            # Calculate smooth curve points around corners
+            curve_points = self._calculate_corner_curve(prev_point, curr_point, next_point)
+            smooth_points.extend(curve_points)
+        
+        smooth_points.append(points[-1])  # End with tail
+        return smooth_points
+    
+    def _calculate_corner_curve(self, prev_point, curr_point, next_point):
+        """Calculate smooth curve points for a corner.
+        
+        Args:
+            prev_point: Previous segment center
+            curr_point: Current segment center  
+            next_point: Next segment center
+            
+        Returns:
+            List of points forming a smooth curve
+        """
+        curve_points = []
+        
+        # Vector from previous to current
+        dx1 = curr_point[0] - prev_point[0]
+        dy1 = curr_point[1] - prev_point[1]
+        
+        # Vector from current to next
+        dx2 = next_point[0] - curr_point[0]
+        dy2 = next_point[1] - curr_point[1]
+        
+        # If it's a straight line, just add the current point
+        if (dx1 == dx2 and dy1 == dy2) or (dx1 == 0 and dy1 == 0) or (dx2 == 0 and dy2 == 0):
+            curve_points.append(curr_point)
+            return curve_points
+        
+        # Create smooth corner with multiple points
+        corner_radius = GameConstants.CELL_SIZE // 3
+        
+        # Calculate curve points
+        for t in [0.3, 0.5, 0.7]:  # Smooth interpolation
+            # Bezier-like curve calculation
+            x = int(curr_point[0] + (dx1 * (1-t) + dx2 * t) * 0.3)
+            y = int(curr_point[1] + (dy1 * (1-t) + dy2 * t) * 0.3)
+            curve_points.append((x, y))
+        
+        return curve_points
+    
+    def _draw_smooth_snake_body(self, points: list, segments: list):
+        """Draw the snake body as a smooth, continuous shape.
+        
+        Args:
+            points: Smoothed path points
+            segments: Original segment positions for thickness calculation
+        """
+        if len(points) < 2:
+            return
+        
+        # Draw the snake body with varying thickness and colors
+        for i in range(len(points) - 1):
+            start_point = points[i]
+            end_point = points[i + 1]
+            
+            # Calculate thickness based on position (thicker at head, thinner at tail)
+            progress = i / max(1, len(points) - 1)
+            base_thickness = 10
+            thickness = int(base_thickness * (1.0 - progress * 0.4))  # Taper toward tail
+            
+            # Calculate colors with gradient
+            color_progress = progress
+            base_green = int(34 + (50 - 34) * (1 - color_progress))
+            mid_green = int(139 + (205 - 139) * (1 - color_progress))
+            light_green = int(34 + (60 - 34) * (1 - color_progress))
+            
+            # Draw multiple layers for 3D effect
+            colors_and_thickness = [
+                ((base_green, mid_green, base_green), thickness),
+                ((50, 205, 50), thickness - 2),
+                ((70, 230, 70), thickness - 4),
             ]
-            pygame.draw.polygon(self.screen, (40, 160, 40), scale_points)
+            
+            for color, thick in colors_and_thickness:
+                if thick > 0:
+                    self._draw_thick_line(start_point, end_point, color, thick)
         
-        # Add subtle highlight for roundness
-        highlight_x = center_x - 3
-        highlight_y = center_y - 3
-        pygame.draw.circle(self.screen, (80, 255, 80), (highlight_x, highlight_y), 2)
+        # Add scale pattern along the body
+        self._draw_snake_scales(points)
+    
+    def _draw_thick_line(self, start_point, end_point, color, thickness):
+        """Draw a thick line between two points with rounded ends.
+        
+        Args:
+            start_point: Starting point (x, y)
+            end_point: Ending point (x, y)
+            color: Line color
+            thickness: Line thickness
+        """
+        # Draw the main line
+        if thickness > 1:
+            pygame.draw.line(self.screen, color, start_point, end_point, thickness)
+            
+            # Draw rounded end caps
+            radius = thickness // 2
+            pygame.draw.circle(self.screen, color, start_point, radius)
+            pygame.draw.circle(self.screen, color, end_point, radius)
+    
+    def _draw_snake_scales(self, points: list):
+        """Draw scale patterns along the snake body.
+        
+        Args:
+            points: Path points along the snake body
+        """
+        scale_spacing = 15  # Distance between scales
+        
+        for i in range(0, len(points) - 1, scale_spacing):
+            if i + 1 < len(points):
+                point = points[i]
+                
+                # Draw small diamond scale
+                scale_size = 3
+                scale_points = [
+                    (point[0] - scale_size, point[1]),
+                    (point[0], point[1] - scale_size),
+                    (point[0] + scale_size, point[1]),
+                    (point[0], point[1] + scale_size)
+                ]
+                pygame.draw.polygon(self.screen, (40, 160, 40), scale_points)
     
     def _draw_snake_head(self, x: int, y: int, direction: Direction):
         """Draw a realistic snake head with proper shape and flickering tongue.
@@ -484,14 +607,14 @@ class GameRenderer:
         center_y = screen_y + GameConstants.CELL_SIZE // 2
         
         # Head shape - more elongated and realistic
-        head_width = 11
-        head_height = 13
+        head_width = 12
+        head_height = 16
         
         # Adjust head shape based on direction
         if direction in [Direction.LEFT, Direction.RIGHT]:
             head_width, head_height = head_height, head_width
         
-        # Draw head with gradient layers
+        # Draw head with gradient layers for 3D effect
         head_colors = [
             (34, 139, 34),   # Dark green (outer)
             (50, 205, 50),   # Medium green (middle)
@@ -532,17 +655,17 @@ class GameRenderer:
         
         # Position eyes based on direction
         if direction == Direction.RIGHT:
-            eye1_pos = (center_x + 3, center_y - 4)
-            eye2_pos = (center_x + 3, center_y + 4)
+            eye1_pos = (center_x + 4, center_y - 4)
+            eye2_pos = (center_x + 4, center_y + 4)
         elif direction == Direction.LEFT:
-            eye1_pos = (center_x - 3, center_y - 4)
-            eye2_pos = (center_x - 3, center_y + 4)
+            eye1_pos = (center_x - 4, center_y - 4)
+            eye2_pos = (center_x - 4, center_y + 4)
         elif direction == Direction.UP:
-            eye1_pos = (center_x - 4, center_y - 3)
-            eye2_pos = (center_x + 4, center_y - 3)
+            eye1_pos = (center_x - 4, center_y - 4)
+            eye2_pos = (center_x + 4, center_y - 4)
         else:  # DOWN
-            eye1_pos = (center_x - 4, center_y + 3)
-            eye2_pos = (center_x + 4, center_y + 3)
+            eye1_pos = (center_x - 4, center_y + 4)
+            eye2_pos = (center_x + 4, center_y + 4)
         
         # Draw eyes with realistic colors
         for eye_pos in [eye1_pos, eye2_pos]:
@@ -571,30 +694,30 @@ class GameRenderer:
         if not tongue_visible:
             return
         
-        tongue_length = 8
+        tongue_length = 10
         tongue_color = (220, 20, 60)  # Red tongue
         
         # Position tongue based on direction
         if direction == Direction.RIGHT:
-            tongue_start = (center_x + 6, center_y)
-            tongue_end = (center_x + 6 + tongue_length, center_y)
-            fork1_end = (center_x + 6 + tongue_length, center_y - 2)
-            fork2_end = (center_x + 6 + tongue_length, center_y + 2)
+            tongue_start = (center_x + 8, center_y)
+            tongue_end = (center_x + 8 + tongue_length, center_y)
+            fork1_end = (center_x + 8 + tongue_length, center_y - 2)
+            fork2_end = (center_x + 8 + tongue_length, center_y + 2)
         elif direction == Direction.LEFT:
-            tongue_start = (center_x - 6, center_y)
-            tongue_end = (center_x - 6 - tongue_length, center_y)
-            fork1_end = (center_x - 6 - tongue_length, center_y - 2)
-            fork2_end = (center_x - 6 - tongue_length, center_y + 2)
+            tongue_start = (center_x - 8, center_y)
+            tongue_end = (center_x - 8 - tongue_length, center_y)
+            fork1_end = (center_x - 8 - tongue_length, center_y - 2)
+            fork2_end = (center_x - 8 - tongue_length, center_y + 2)
         elif direction == Direction.UP:
-            tongue_start = (center_x, center_y - 6)
-            tongue_end = (center_x, center_y - 6 - tongue_length)
-            fork1_end = (center_x - 2, center_y - 6 - tongue_length)
-            fork2_end = (center_x + 2, center_y - 6 - tongue_length)
+            tongue_start = (center_x, center_y - 8)
+            tongue_end = (center_x, center_y - 8 - tongue_length)
+            fork1_end = (center_x - 2, center_y - 8 - tongue_length)
+            fork2_end = (center_x + 2, center_y - 8 - tongue_length)
         else:  # DOWN
-            tongue_start = (center_x, center_y + 6)
-            tongue_end = (center_x, center_y + 6 + tongue_length)
-            fork1_end = (center_x - 2, center_y + 6 + tongue_length)
-            fork2_end = (center_x + 2, center_y + 6 + tongue_length)
+            tongue_start = (center_x, center_y + 8)
+            tongue_end = (center_x, center_y + 8 + tongue_length)
+            fork1_end = (center_x - 2, center_y + 8 + tongue_length)
+            fork2_end = (center_x + 2, center_y + 8 + tongue_length)
         
         # Draw main tongue
         pygame.draw.line(self.screen, tongue_color, tongue_start, tongue_end, 2)
@@ -615,17 +738,17 @@ class GameRenderer:
         
         # Position nostrils based on direction
         if direction == Direction.RIGHT:
-            nostril1_pos = (center_x + 5, center_y - 2)
-            nostril2_pos = (center_x + 5, center_y + 2)
+            nostril1_pos = (center_x + 6, center_y - 2)
+            nostril2_pos = (center_x + 6, center_y + 2)
         elif direction == Direction.LEFT:
-            nostril1_pos = (center_x - 5, center_y - 2)
-            nostril2_pos = (center_x - 5, center_y + 2)
+            nostril1_pos = (center_x - 6, center_y - 2)
+            nostril2_pos = (center_x - 6, center_y + 2)
         elif direction == Direction.UP:
-            nostril1_pos = (center_x - 2, center_y - 5)
-            nostril2_pos = (center_x + 2, center_y - 5)
+            nostril1_pos = (center_x - 2, center_y - 6)
+            nostril2_pos = (center_x + 2, center_y - 6)
         else:  # DOWN
-            nostril1_pos = (center_x - 2, center_y + 5)
-            nostril2_pos = (center_x + 2, center_y + 5)
+            nostril1_pos = (center_x - 2, center_y + 6)
+            nostril2_pos = (center_x + 2, center_y + 6)
         
         # Draw tiny nostrils
         pygame.draw.circle(self.screen, nostril_color, nostril1_pos, 1)
