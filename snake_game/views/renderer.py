@@ -5,10 +5,12 @@ import math
 from typing import List, Tuple
 from ..models import Snake, Fruit, GameState, FruitType, Direction
 from ..utils import GameConstants
+from ..utils.path_smoother import PathSmoother
+from .snake_renderer import SnakeBodyRenderer, SnakeHeadRenderer, SnakeScaleRenderer
 
 
 class GameRenderer:
-    """Handles all game rendering and visual effects."""
+    """Handles all game rendering and visual effects with refactored architecture."""
     
     def __init__(self, screen: pygame.Surface):
         """Initialize the game renderer.
@@ -20,6 +22,11 @@ class GameRenderer:
         self.font = pygame.font.Font(None, 36)
         self.small_font = pygame.font.Font(None, 24)
         self.large_font = pygame.font.Font(None, 48)
+        
+        # Initialize component renderers
+        self.snake_body_renderer = SnakeBodyRenderer(screen)
+        self.snake_head_renderer = SnakeHeadRenderer(screen)
+        self.snake_scale_renderer = SnakeScaleRenderer(screen)
         
         # Load fruit images (after pygame display is initialized)
         self.fruit_images = {}
@@ -407,7 +414,7 @@ class GameRenderer:
         pygame.draw.rect(self.screen, GameConstants.BLACK, play_rect)
     
     def _draw_snake(self, snake: Snake):
-        """Draw the snake as a single, continuous, smooth shape.
+        """Draw the snake using component renderers for clean separation of concerns.
         
         Args:
             snake: Snake object to draw
@@ -416,15 +423,24 @@ class GameRenderer:
             # If only head, draw it normally
             if snake.segments:
                 head_x, head_y = snake.segments[0]
-                self._draw_snake_head(head_x, head_y, snake.direction)
+                self.snake_head_renderer.draw_head(head_x, head_y, snake.direction)
             return
         
-        # Draw the continuous snake body
-        self._draw_continuous_snake_body(snake.segments)
+        # Convert grid positions to screen coordinates
+        screen_points = PathSmoother.convert_segments_to_screen_points(snake.segments)
         
-        # Draw head last (on top)
+        # Create smooth path points for the snake body
+        smooth_points = PathSmoother.create_smooth_path(screen_points)
+        
+        # Draw the continuous snake body using component renderer
+        self.snake_body_renderer.draw_body(smooth_points, snake.segments)
+        
+        # Add scale patterns using component renderer
+        self.snake_scale_renderer.draw_scales(smooth_points)
+        
+        # Draw head last (on top) using component renderer
         head_x, head_y = snake.segments[0]
-        self._draw_snake_head(head_x, head_y, snake.direction)
+        self.snake_head_renderer.draw_head(head_x, head_y, snake.direction)
     
     def _draw_continuous_snake_body(self, segments: list):
         """Draw the snake as a single continuous, smooth shape.

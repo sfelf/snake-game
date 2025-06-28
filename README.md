@@ -1,5 +1,10 @@
 # Snake Game
 
+[![Test Coverage](https://img.shields.io/badge/coverage-38.5%25-orange.svg)](htmlcov/index.html)
+[![Python](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://python.org)
+[![Pygame](https://img.shields.io/badge/pygame-2.6.1-green.svg)](https://pygame.org)
+[![Code Quality](https://img.shields.io/badge/code%20quality-refactored-brightgreen.svg)](#architecture)
+
 A classic Snake game implementation using Python and Pygame with enhanced graphics, professional architecture, and comprehensive testing.
 
 ## Features
@@ -54,6 +59,36 @@ This project follows professional software development practices with a clean, m
 - **Dependency Injection**: Components are loosely coupled
 - **Observer Pattern**: Game state management
 
+## Architecture
+
+### Code Quality & Testing
+- **Test Coverage**: 38.5% and growing with comprehensive test suite
+- **Separation of Concerns**: Clean architecture with distinct layers
+- **Component-Based Rendering**: Modular rendering system with specialized components
+- **Path Smoothing**: Advanced mathematical algorithms for smooth snake curves
+- **OOP Best Practices**: Proper encapsulation, inheritance, and polymorphism
+
+### Refactored Architecture
+The codebase has been refactored to follow modern software engineering principles:
+
+#### Rendering Components
+- **SnakeBodyRenderer**: Handles snake body rendering with proper proportions and 3D effects
+- **SnakeHeadRenderer**: Specialized head rendering with realistic features (eyes, tongue, nostrils)
+- **SnakeScaleRenderer**: Manages scale patterns and texture details
+- **PathSmoother**: Advanced curve generation using Catmull-Rom splines
+
+#### Design Patterns
+- **Component Pattern**: Rendering system broken into specialized components
+- **Strategy Pattern**: Different rendering strategies for different snake parts
+- **Factory Pattern**: Fruit creation and management
+- **Observer Pattern**: Game state change notifications
+
+#### Testing Strategy
+- **Unit Tests**: Individual component testing with mocks
+- **Integration Tests**: Cross-component interaction testing
+- **Coverage Reporting**: Automated coverage tracking and reporting
+- **Continuous Testing**: Test suite runs on every change
+
 ### Project Structure
 
 ```
@@ -68,15 +103,19 @@ snake-game/
 │   │   └── game_state.py    # Game state management
 │   ├── views/               # Rendering and visual components
 │   │   ├── __init__.py
-│   │   └── renderer.py      # Game renderer
+│   │   ├── renderer.py      # Main game renderer (refactored)
+│   │   └── snake_renderer.py # Specialized snake rendering components
 │   ├── controllers/         # Game logic coordination
 │   │   ├── __init__.py
 │   │   ├── game_controller.py    # Main game controller
 │   │   └── input_handler.py     # Input processing
-│   ├── utils/               # Utilities and constants
+│   ├── utils/               # Utilities and helper classes
 │   │   ├── __init__.py
 │   │   ├── constants.py     # Game constants
-│   │   └── audio.py         # Audio management
+│   │   ├── audio.py         # Audio management
+│   │   └── path_smoother.py # Advanced curve generation
+│   ├── assets/              # Game assets
+│   │   └── images/          # High-quality fruit images
 │   ├── __init__.py
 │   └── main.py              # Entry point
 ├── tests/                   # Comprehensive test suite
@@ -85,10 +124,15 @@ snake-game/
 │   ├── test_models.py       # Model tests
 │   ├── test_controllers.py  # Controller tests
 │   ├── test_utils.py        # Utility tests
-│   └── test_integration.py  # Integration tests
+│   ├── test_integration.py  # Integration tests
+│   ├── test_path_smoother.py # Path smoothing tests
+│   ├── test_snake_renderers.py # Component renderer tests
+│   └── test_renderer_refactored.py # Refactored renderer tests
+├── htmlcov/                 # Coverage HTML reports
 ├── pytest.ini              # Pytest configuration
-├── pyproject.toml           # Poetry configuration
+├── pyproject.toml           # Poetry configuration with coverage tools
 ├── poetry.lock              # Dependency lock file
+├── coverage.json            # Coverage data
 ├── .gitignore              # Git ignore rules
 └── README.md               # This file
 ```
@@ -152,6 +196,41 @@ poetry run python -m snake_game.main
 - **Y/N**: Confirm/cancel high score reset
 
 ## Development
+
+### Running Tests
+
+The project includes a comprehensive test suite with coverage reporting:
+
+```bash
+# Run all tests
+poetry run pytest
+
+# Run tests with coverage report
+poetry run pytest --cov=snake_game --cov-report=term-missing
+
+# Generate HTML coverage report
+poetry run pytest --cov=snake_game --cov-report=html
+
+# Run specific test file
+poetry run pytest tests/test_path_smoother.py
+
+# Run tests with verbose output
+poetry run pytest -v
+```
+
+### Coverage Reports
+
+- **Current Coverage**: 38.5%
+- **HTML Reports**: Available in `htmlcov/index.html` after running coverage
+- **JSON Data**: Coverage data stored in `coverage.json`
+- **Missing Lines**: Detailed in terminal output with `--cov-report=term-missing`
+
+### Test Categories
+
+- **Unit Tests**: Individual component testing (`test_models.py`, `test_utils.py`)
+- **Integration Tests**: Cross-component testing (`test_integration.py`)
+- **Component Tests**: Specialized renderer testing (`test_snake_renderers.py`)
+- **Architecture Tests**: Refactored system testing (`test_renderer_refactored.py`)
 
 ### Running Tests
 
