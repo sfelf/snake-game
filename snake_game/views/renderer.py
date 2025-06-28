@@ -600,7 +600,7 @@ class GameRenderer:
         return (int(x), int(y))
     
     def _draw_smooth_snake_body(self, points: list, segments: list):
-        """Draw the snake body as a wide, smooth, shimmering 3D shape.
+        """Draw the snake body with proper proportions and green striped coloring.
         
         Args:
             points: Smoothed path points
@@ -609,21 +609,163 @@ class GameRenderer:
         if len(points) < 2:
             return
         
-        # Draw the snake body with enhanced width, smoothness, and 3D effects
+        # Draw the snake body with proper proportions and green stripes
         for i in range(len(points) - 1):
             start_point = points[i]
             end_point = points[i + 1]
             
-            # Calculate smooth thickness progression - much wider snake
+            # Calculate proper body proportions: thinner at head, widest in middle, tapered to tail
             progress = i / max(1, len(points) - 1)
-            base_thickness = 18  # Increased from 12 for wider snake
-            thickness = max(6, int(base_thickness * (1.0 - progress * 0.6)))  # Better taper
             
-            # Draw enhanced 3D segment with shimmer
-            self._draw_enhanced_3d_segment(start_point, end_point, thickness, progress, i)
+            # Create natural body thickness curve
+            if progress < 0.3:  # Head section - thinner
+                thickness_factor = 0.7 + (progress / 0.3) * 0.3  # 0.7 to 1.0
+            elif progress < 0.7:  # Middle section - widest
+                middle_progress = (progress - 0.3) / 0.4
+                thickness_factor = 1.0 + math.sin(middle_progress * math.pi) * 0.3  # 1.0 to 1.3 and back
+            else:  # Tail section - tapered
+                tail_progress = (progress - 0.7) / 0.3
+                thickness_factor = 1.0 - tail_progress * 0.6  # 1.0 to 0.4
+            
+            base_thickness = 16  # Base thickness
+            thickness = max(4, int(base_thickness * thickness_factor))
+            
+            # Draw enhanced segment with proper proportions and stripes
+            self._draw_striped_segment(start_point, end_point, thickness, progress, i)
+    
+    def _draw_striped_segment(self, start_point, end_point, thickness, progress, segment_index):
+        """Draw a single segment with green coloring and stripe patterns.
+        
+        Args:
+            start_point: Starting point (x, y)
+            end_point: Ending point (x, y)
+            thickness: Segment thickness
+            progress: Position along snake (0=head, 1=tail)
+            segment_index: Index for stripe patterns
+        """
+        # Calculate segment direction
+        dx = end_point[0] - start_point[0]
+        dy = end_point[1] - start_point[1]
+        length = math.sqrt(dx*dx + dy*dy)
+        
+        if length == 0:
+            return
+        
+        # Enhanced green coloration with shimmer
+        base_intensity = 1.0 - progress * 0.1  # Less fade for better visibility
+        
+        # Multi-wave shimmer system
+        time_ms = pygame.time.get_ticks()
+        primary_shimmer = math.sin((time_ms * 0.003) + (segment_index * 0.2)) * 0.3 + 0.7
+        secondary_shimmer = math.cos((time_ms * 0.002) + (segment_index * 0.15)) * 0.2 + 0.8
+        shimmer_intensity = (primary_shimmer * secondary_shimmer) * base_intensity
+        
+        # Stripe pattern - every few segments gets darker stripes
+        stripe_pattern = math.sin(segment_index * 0.4) > 0.3  # Creates stripe bands
+        stripe_intensity = 0.7 if stripe_pattern else 1.0
+        
+        # Green coloration with stripes
+        base_colors = {
+            'shadow': (int(8 * base_intensity * stripe_intensity), int(35 * base_intensity * stripe_intensity), int(8 * base_intensity * stripe_intensity)),
+            'main_shadow': (int(18 * base_intensity * stripe_intensity), int(70 * base_intensity * stripe_intensity), int(18 * base_intensity * stripe_intensity)),
+            'secondary': (int(25 * base_intensity * stripe_intensity), int(90 * base_intensity * stripe_intensity), int(25 * base_intensity * stripe_intensity)),
+            'base': (int(40 * base_intensity * stripe_intensity), int(140 * base_intensity * stripe_intensity), int(40 * base_intensity * stripe_intensity)),
+            'mid': (int(50 * shimmer_intensity * stripe_intensity), int(170 * shimmer_intensity * stripe_intensity), int(50 * shimmer_intensity * stripe_intensity)),
+            'highlight': (int(65 * shimmer_intensity * stripe_intensity), int(210 * shimmer_intensity * stripe_intensity), int(65 * shimmer_intensity * stripe_intensity)),
+            'top': (int(85 * shimmer_intensity * stripe_intensity), int(240 * shimmer_intensity * stripe_intensity), int(85 * shimmer_intensity * stripe_intensity)),
+            'specular': (int(110 * shimmer_intensity * stripe_intensity), int(255 * shimmer_intensity * stripe_intensity), int(110 * shimmer_intensity * stripe_intensity)),
+            'ultra': (int(140 * shimmer_intensity * stripe_intensity), int(255 * shimmer_intensity * stripe_intensity), int(140 * shimmer_intensity * stripe_intensity))
+        }
+        
+        # Enhanced 9-layer shading system with green striped colors
+        shading_layers = [
+            # Deep shadow
+            {
+                'color': base_colors['shadow'],
+                'offset': (-0.3, -0.3),
+                'thickness_mult': 1.05,
+                'blur': True
+            },
+            # Main shadow layer
+            {
+                'color': base_colors['main_shadow'],
+                'offset': (-0.2, -0.2),
+                'thickness_mult': 1.0,
+                'blur': False
+            },
+            # Secondary shadow
+            {
+                'color': base_colors['secondary'],
+                'offset': (-0.1, -0.1),
+                'thickness_mult': 0.98,
+                'blur': False
+            },
+            # Base body color
+            {
+                'color': base_colors['base'],
+                'offset': (0, 0),
+                'thickness_mult': 0.95,
+                'blur': False
+            },
+            # Mid-tone with shimmer
+            {
+                'color': base_colors['mid'],
+                'offset': (0.05, 0.05),
+                'thickness_mult': 0.8,
+                'blur': False
+            },
+            # Bright highlight
+            {
+                'color': base_colors['highlight'],
+                'offset': (0.12, 0.12),
+                'thickness_mult': 0.65,
+                'blur': False
+            },
+            # Top highlight
+            {
+                'color': base_colors['top'],
+                'offset': (0.18, 0.18),
+                'thickness_mult': 0.45,
+                'blur': False
+            },
+            # Specular highlight
+            {
+                'color': base_colors['specular'],
+                'offset': (0.22, 0.22),
+                'thickness_mult': 0.25,
+                'blur': False
+            },
+            # Ultra-bright specular
+            {
+                'color': base_colors['ultra'],
+                'offset': (0.25, 0.25),
+                'thickness_mult': 0.12,
+                'blur': False
+            }
+        ]
+        
+        # Draw each shading layer
+        for layer in shading_layers:
+            layer_thickness = max(1, int(thickness * layer['thickness_mult']))
+            
+            # Enhanced offset calculation
+            offset_scale = min(1.0, thickness / 16.0)  # Normalize to base thickness
+            offset_distance = thickness * 0.08 * offset_scale
+            
+            offset_x = layer['offset'][0] * offset_distance
+            offset_y = layer['offset'][1] * offset_distance
+            
+            offset_start = (int(start_point[0] + offset_x), int(start_point[1] + offset_y))
+            offset_end = (int(end_point[0] + offset_x), int(end_point[1] + offset_y))
+            
+            # Draw the layer
+            if layer.get('blur', False):
+                self._draw_blurred_line(offset_start, offset_end, layer['color'], layer_thickness)
+            else:
+                self._draw_ultra_smooth_line(offset_start, offset_end, layer['color'], layer_thickness)
     
     def _draw_enhanced_3d_segment(self, start_point, end_point, thickness, progress, segment_index):
-        """Draw a single segment with maximum 3D effects, enhanced depth, and realistic lighting.
+        """Draw a single segment with python coloration and maximum 3D effects.
         
         Args:
             start_point: Starting point (x, y)
@@ -640,7 +782,7 @@ class GameRenderer:
         if length == 0:
             return
         
-        # Enhanced color progression with shimmer and depth
+        # Enhanced color progression with python coloration
         base_intensity = 1.0 - progress * 0.15  # Less fade for better visibility
         
         # Multi-wave shimmer system for more complex lighting
@@ -649,67 +791,99 @@ class GameRenderer:
         secondary_shimmer = math.cos((time_ms * 0.002) + (segment_index * 0.15)) * 0.2 + 0.8
         shimmer_intensity = (primary_shimmer * secondary_shimmer) * base_intensity
         
-        # Enhanced 9-layer shading system for maximum 3D depth
+        # Python pattern variation - create banded pattern
+        pattern_wave = math.sin(segment_index * 0.8) * 0.3 + 0.7
+        is_dark_band = (segment_index // 3) % 2 == 0  # Alternating bands every 3 segments
+        
+        # Python coloration - browns and tans with pattern
+        if is_dark_band:
+            # Dark brown bands
+            base_colors = {
+                'shadow': (int(15 * base_intensity), int(10 * base_intensity), int(5 * base_intensity)),
+                'main_shadow': (int(25 * base_intensity), int(18 * base_intensity), int(10 * base_intensity)),
+                'secondary': (int(35 * base_intensity), int(25 * base_intensity), int(15 * base_intensity)),
+                'base': (int(60 * base_intensity), int(45 * base_intensity), int(25 * base_intensity)),
+                'mid': (int(80 * shimmer_intensity), int(60 * shimmer_intensity), int(35 * shimmer_intensity)),
+                'highlight': (int(100 * shimmer_intensity), int(80 * shimmer_intensity), int(50 * shimmer_intensity)),
+                'top': (int(120 * shimmer_intensity), int(100 * shimmer_intensity), int(70 * shimmer_intensity)),
+                'specular': (int(140 * shimmer_intensity), int(120 * shimmer_intensity), int(90 * shimmer_intensity)),
+                'ultra': (int(160 * shimmer_intensity), int(140 * shimmer_intensity), int(110 * shimmer_intensity))
+            }
+        else:
+            # Light tan/cream bands
+            base_colors = {
+                'shadow': (int(25 * base_intensity), int(20 * base_intensity), int(15 * base_intensity)),
+                'main_shadow': (int(45 * base_intensity), int(35 * base_intensity), int(25 * base_intensity)),
+                'secondary': (int(65 * base_intensity), int(50 * base_intensity), int(35 * base_intensity)),
+                'base': (int(100 * base_intensity), int(80 * base_intensity), int(55 * base_intensity)),
+                'mid': (int(130 * shimmer_intensity), int(110 * shimmer_intensity), int(80 * shimmer_intensity)),
+                'highlight': (int(160 * shimmer_intensity), int(140 * shimmer_intensity), int(110 * shimmer_intensity)),
+                'top': (int(180 * shimmer_intensity), int(160 * shimmer_intensity), int(130 * shimmer_intensity)),
+                'specular': (int(200 * shimmer_intensity), int(180 * shimmer_intensity), int(150 * shimmer_intensity)),
+                'ultra': (int(220 * shimmer_intensity), int(200 * shimmer_intensity), int(170 * shimmer_intensity))
+            }
+        
+        # Enhanced 9-layer shading system with python colors
         shading_layers = [
             # Deep shadow (simulates ambient occlusion)
             {
-                'color': (int(8 * base_intensity), int(35 * base_intensity), int(8 * base_intensity)),
+                'color': base_colors['shadow'],
                 'offset': (-0.3, -0.3),
                 'thickness_mult': 1.05,
                 'blur': True
             },
             # Main shadow layer
             {
-                'color': (int(18 * base_intensity), int(70 * base_intensity), int(18 * base_intensity)),
+                'color': base_colors['main_shadow'],
                 'offset': (-0.2, -0.2),
                 'thickness_mult': 1.0,
                 'blur': False
             },
             # Secondary shadow
             {
-                'color': (int(25 * base_intensity), int(90 * base_intensity), int(25 * base_intensity)),
+                'color': base_colors['secondary'],
                 'offset': (-0.1, -0.1),
                 'thickness_mult': 0.98,
                 'blur': False
             },
             # Base body color (main surface)
             {
-                'color': (int(40 * base_intensity), int(140 * base_intensity), int(40 * base_intensity)),
+                'color': base_colors['base'],
                 'offset': (0, 0),
                 'thickness_mult': 0.95,
                 'blur': False
             },
             # Mid-tone with primary shimmer
             {
-                'color': (int(50 * shimmer_intensity), int(170 * shimmer_intensity), int(50 * shimmer_intensity)),
+                'color': base_colors['mid'],
                 'offset': (0.05, 0.05),
                 'thickness_mult': 0.8,
                 'blur': False
             },
             # Bright highlight with shimmer
             {
-                'color': (int(65 * shimmer_intensity), int(210 * shimmer_intensity), int(65 * shimmer_intensity)),
+                'color': base_colors['highlight'],
                 'offset': (0.12, 0.12),
                 'thickness_mult': 0.65,
                 'blur': False
             },
             # Top highlight (simulates direct lighting)
             {
-                'color': (int(85 * shimmer_intensity), int(240 * shimmer_intensity), int(85 * shimmer_intensity)),
+                'color': base_colors['top'],
                 'offset': (0.18, 0.18),
                 'thickness_mult': 0.45,
                 'blur': False
             },
             # Specular highlight (surface reflection)
             {
-                'color': (int(110 * shimmer_intensity), int(255 * shimmer_intensity), int(110 * shimmer_intensity)),
+                'color': base_colors['specular'],
                 'offset': (0.22, 0.22),
                 'thickness_mult': 0.25,
                 'blur': False
             },
-            # Ultra-bright specular (wet snake effect)
+            # Ultra-bright specular (wet python effect)
             {
-                'color': (int(140 * shimmer_intensity), int(255 * shimmer_intensity), int(140 * shimmer_intensity)),
+                'color': base_colors['ultra'],
                 'offset': (0.25, 0.25),
                 'thickness_mult': 0.12,
                 'blur': False
@@ -805,12 +979,12 @@ class GameRenderer:
                 pygame.draw.circle(self.screen, color, end_point, radius)
     
     def _draw_snake_scales(self, points: list):
-        """Draw enhanced scale patterns with shimmer effects.
+        """Draw green scale patterns with stripe effects.
         
         Args:
             points: Path points along the snake body
         """
-        scale_spacing = 25  # Increased spacing for wider snake
+        scale_spacing = 20  # Spacing for scales
         time_ms = pygame.time.get_ticks()
         
         for i in range(0, len(points) - 1, scale_spacing):
@@ -819,18 +993,24 @@ class GameRenderer:
                 
                 # Calculate scale size based on position (smaller toward tail)
                 progress = i / max(1, len(points) - 1)
-                base_scale_size = max(3, int(6 * (1.0 - progress * 0.4)))
+                base_scale_size = max(2, int(4 * (1.0 - progress * 0.4)))
                 
                 # Shimmer effect for scales
                 shimmer = math.sin((time_ms * 0.004) + (i * 0.15)) * 0.4 + 0.6
                 scale_size = int(base_scale_size * shimmer)
                 
-                # Enhanced scale colors with shimmer
-                base_alpha = int(100 * shimmer)
-                scale_color = (60, 180, 60, base_alpha)
-                highlight_color = (100, 220, 100, int(base_alpha * 0.7))
+                # Green scale coloring with stripe variation
+                stripe_pattern = math.sin(i * 0.4) > 0.3
+                stripe_intensity = 0.7 if stripe_pattern else 1.0
                 
-                # Draw main scale
+                base_green = int(80 * shimmer * stripe_intensity)
+                bright_green = int(160 * shimmer * stripe_intensity)
+                
+                scale_alpha = int(90 * shimmer)
+                scale_color = (int(base_green * 0.5), base_green, int(base_green * 0.5), scale_alpha)
+                highlight_color = (int(bright_green * 0.6), bright_green, int(bright_green * 0.6), int(scale_alpha * 0.7))
+                
+                # Draw simple diamond scale
                 scale_points = [
                     (point[0] - scale_size, point[1]),
                     (point[0], point[1] - scale_size),
@@ -841,28 +1021,20 @@ class GameRenderer:
                 # Create surface for alpha blending
                 scale_surface = pygame.Surface((scale_size * 2 + 2, scale_size * 2 + 2), pygame.SRCALPHA)
                 
-                # Draw scale with gradient effect
-                pygame.draw.polygon(scale_surface, scale_color, [
-                    (scale_size + 1, 1),
-                    (1, scale_size + 1),
-                    (scale_size + 1, scale_size * 2 + 1),
-                    (scale_size * 2 + 1, scale_size + 1)
-                ])
+                # Adjust points for surface coordinates
+                surface_points = [(x - point[0] + scale_size + 1, y - point[1] + scale_size + 1) for x, y in scale_points]
                 
-                # Add highlight to scale
-                if scale_size > 2:
-                    highlight_size = scale_size - 1
-                    pygame.draw.polygon(scale_surface, highlight_color, [
-                        (scale_size + 1, 2),
-                        (2, scale_size + 1),
-                        (scale_size + 1, scale_size * 2),
-                        (scale_size * 2, scale_size + 1)
-                    ])
+                pygame.draw.polygon(scale_surface, scale_color, surface_points)
+                
+                # Add highlight
+                if scale_size > 1:
+                    highlight_points = [(x - 1, y - 1) for x, y in surface_points]
+                    pygame.draw.polygon(scale_surface, highlight_color, highlight_points)
                 
                 self.screen.blit(scale_surface, (point[0] - scale_size - 1, point[1] - scale_size - 1))
     
     def _draw_snake_head(self, x: int, y: int, direction: Direction):
-        """Draw a highly realistic 3D snake head with enhanced detail and depth.
+        """Draw a realistic elongated snake head with proper proportions.
         
         Args:
             x: Grid x position
@@ -874,9 +1046,9 @@ class GameRenderer:
         center_x = screen_x + GameConstants.CELL_SIZE // 2
         center_y = screen_y + GameConstants.CELL_SIZE // 2
         
-        # Enhanced head dimensions for more realistic proportions
-        base_width = 16
-        base_height = 20
+        # More elongated head dimensions
+        base_width = 14
+        base_height = 24  # Much more elongated
         
         # Adjust head orientation based on direction
         if direction in [Direction.LEFT, Direction.RIGHT]:
@@ -884,23 +1056,20 @@ class GameRenderer:
         else:
             head_width, head_height = base_width, base_height
         
-        # Draw multi-layered 3D head with realistic shaping
-        self._draw_3d_head_layers(center_x, center_y, head_width, head_height, direction)
+        # Draw multi-layered elongated head with green coloring
+        self._draw_elongated_head_layers(center_x, center_y, head_width, head_height, direction)
         
-        # Draw enhanced realistic eyes
-        self._draw_realistic_eyes(center_x, center_y, direction)
+        # Draw realistic eyes
+        self._draw_snake_eyes(center_x, center_y, direction)
         
         # Draw animated forked tongue
         self._draw_snake_tongue(center_x, center_y, direction)
         
         # Draw detailed nostrils
         self._draw_enhanced_nostrils(center_x, center_y, direction)
-        
-        # Add head scales and texture details
-        self._draw_head_scales(center_x, center_y, head_width, head_height, direction)
     
-    def _draw_3d_head_layers(self, center_x: int, center_y: int, width: int, height: int, direction: Direction):
-        """Draw multiple layers for realistic 3D head shape with proper depth.
+    def _draw_elongated_head_layers(self, center_x: int, center_y: int, width: int, height: int, direction: Direction):
+        """Draw multiple layers for elongated snake head with green coloring.
         
         Args:
             center_x: Head center x position
@@ -913,53 +1082,127 @@ class GameRenderer:
         time_ms = pygame.time.get_ticks()
         shimmer = math.sin(time_ms * 0.002) * 0.2 + 0.8
         
-        # Enhanced 3D head layers with realistic snake head shape
+        # Green head layers with proper elongated shape
         head_layers = [
-            # Deep shadow layer (bottom/back of head)
+            # Deep shadow layer
             {
-                'color': (int(20 * shimmer), int(70 * shimmer), int(20 * shimmer)),
+                'color': (int(15 * shimmer), int(60 * shimmer), int(15 * shimmer)),
                 'offset': (-2, -2),
-                'size_mult': 1.15,
-                'shape': 'ellipse'
+                'size_mult': 1.1,
             },
             # Main shadow layer
             {
-                'color': (int(28 * shimmer), int(95 * shimmer), int(28 * shimmer)),
+                'color': (int(25 * shimmer), int(90 * shimmer), int(25 * shimmer)),
                 'offset': (-1, -1),
-                'size_mult': 1.1,
-                'shape': 'ellipse'
+                'size_mult': 1.05,
             },
-            # Base head color
+            # Base head color - green
             {
                 'color': (int(40 * shimmer), int(140 * shimmer), int(40 * shimmer)),
                 'offset': (0, 0),
                 'size_mult': 1.0,
-                'shape': 'ellipse'
             },
             # Mid-tone highlight
             {
                 'color': (int(55 * shimmer), int(180 * shimmer), int(55 * shimmer)),
                 'offset': (0, 0),
                 'size_mult': 0.85,
-                'shape': 'ellipse'
             },
-            # Bright highlight (top of head)
+            # Bright highlight
             {
                 'color': (int(70 * shimmer), int(220 * shimmer), int(70 * shimmer)),
                 'offset': (1, 1),
                 'size_mult': 0.7,
-                'shape': 'ellipse'
             },
             # Top shimmer highlight
             {
                 'color': (int(90 * shimmer), int(255 * shimmer), int(90 * shimmer)),
                 'offset': (2, 2),
                 'size_mult': 0.5,
+            }
+        ]
+        
+        # Draw each head layer with elongated shape
+        for layer in head_layers:
+            layer_width = int(width * layer['size_mult'])
+            layer_height = int(height * layer['size_mult'])
+            
+            # Apply offset for 3D effect
+            offset_x = center_x + layer['offset'][0]
+            offset_y = center_y + layer['offset'][1]
+            
+            # Create elongated head shape rectangle
+            head_rect = pygame.Rect(
+                offset_x - layer_width // 2,
+                offset_y - layer_height // 2,
+                layer_width,
+                layer_height
+            )
+            
+            # Draw elongated elliptical head shape
+            pygame.draw.ellipse(self.screen, layer['color'], head_rect)
+    
+    def _draw_3d_head_layers(self, center_x: int, center_y: int, width: int, height: int, direction: Direction):
+        """Draw multiple layers for realistic 3D python head shape with proper depth.
+        
+        Args:
+            center_x: Head center x position
+            center_y: Head center y position
+            width: Head width
+            height: Head height
+            direction: Snake's current direction
+        """
+        # Time-based shimmer for python head
+        time_ms = pygame.time.get_ticks()
+        shimmer = math.sin(time_ms * 0.002) * 0.2 + 0.8
+        
+        # Python head layers with characteristic brown/tan coloration
+        head_layers = [
+            # Deep shadow layer (bottom/back of head)
+            {
+                'color': (int(25 * shimmer), int(15 * shimmer), int(10 * shimmer)),  # Dark brown
+                'offset': (-2, -2),
+                'size_mult': 1.2,  # Larger for python's robust head
                 'shape': 'ellipse'
             },
-            # Specular highlight (very bright, small)
+            # Main shadow layer
             {
-                'color': (int(130 * shimmer), int(255 * shimmer), int(130 * shimmer)),
+                'color': (int(45 * shimmer), int(30 * shimmer), int(20 * shimmer)),  # Medium brown
+                'offset': (-1, -1),
+                'size_mult': 1.15,
+                'shape': 'ellipse'
+            },
+            # Base head color - python brown
+            {
+                'color': (int(80 * shimmer), int(60 * shimmer), int(40 * shimmer)),  # Python brown
+                'offset': (0, 0),
+                'size_mult': 1.0,
+                'shape': 'ellipse'
+            },
+            # Mid-tone highlight - lighter brown
+            {
+                'color': (int(120 * shimmer), int(90 * shimmer), int(60 * shimmer)),  # Light brown
+                'offset': (0, 0),
+                'size_mult': 0.85,
+                'shape': 'ellipse'
+            },
+            # Bright highlight - tan color
+            {
+                'color': (int(160 * shimmer), int(130 * shimmer), int(90 * shimmer)),  # Tan
+                'offset': (1, 1),
+                'size_mult': 0.7,
+                'shape': 'ellipse'
+            },
+            # Top shimmer highlight - light tan
+            {
+                'color': (int(200 * shimmer), int(170 * shimmer), int(120 * shimmer)),  # Light tan
+                'offset': (2, 2),
+                'size_mult': 0.5,
+                'shape': 'ellipse'
+            },
+            # Specular highlight - cream color
+            {
+                'color': (int(220 * shimmer), int(200 * shimmer), int(160 * shimmer)),  # Cream
                 'offset': (2, 2),
                 'size_mult': 0.3,
                 'shape': 'ellipse'
@@ -983,11 +1226,11 @@ class GameRenderer:
                 layer_height
             )
             
-            # Draw elliptical head shape
+            # Draw elliptical python head shape
             pygame.draw.ellipse(self.screen, layer['color'], head_rect)
     
-    def _draw_realistic_eyes(self, center_x: int, center_y: int, direction: Direction):
-        """Draw highly realistic snake eyes with proper 3D depth and detail.
+    def _draw_snake_eyes(self, center_x: int, center_y: int, direction: Direction):
+        """Draw realistic snake eyes with proper positioning.
         
         Args:
             center_x: Head center x position
@@ -998,21 +1241,21 @@ class GameRenderer:
         pupil_width = 2
         pupil_height = 6
         
-        # Enhanced eye positioning based on direction
+        # Position eyes based on direction for elongated head
         if direction == Direction.RIGHT:
-            eye1_pos = (center_x + 5, center_y - 5)
-            eye2_pos = (center_x + 5, center_y + 5)
+            eye1_pos = (center_x + 6, center_y - 4)
+            eye2_pos = (center_x + 6, center_y + 4)
         elif direction == Direction.LEFT:
-            eye1_pos = (center_x - 5, center_y - 5)
-            eye2_pos = (center_x - 5, center_y + 5)
+            eye1_pos = (center_x - 6, center_y - 4)
+            eye2_pos = (center_x - 6, center_y + 4)
         elif direction == Direction.UP:
-            eye1_pos = (center_x - 5, center_y - 5)
-            eye2_pos = (center_x + 5, center_y - 5)
+            eye1_pos = (center_x - 4, center_y - 6)
+            eye2_pos = (center_x + 4, center_y - 6)
         else:  # DOWN
-            eye1_pos = (center_x - 5, center_y + 5)
-            eye2_pos = (center_x + 5, center_y + 5)
+            eye1_pos = (center_x - 4, center_y + 6)
+            eye2_pos = (center_x + 4, center_y + 6)
         
-        # Draw both eyes with enhanced realism
+        # Draw both eyes with realistic colors
         for eye_pos in [eye1_pos, eye2_pos]:
             # Eye socket shadow
             pygame.draw.circle(self.screen, (15, 60, 15), (eye_pos[0], eye_pos[1] + 1), eye_size + 1)
@@ -1020,7 +1263,7 @@ class GameRenderer:
             # Eye white/sclera with slight yellow tint
             pygame.draw.circle(self.screen, (250, 250, 220), eye_pos, eye_size)
             
-            # Iris with realistic snake coloring (golden-green)
+            # Iris with golden-green coloring
             pygame.draw.circle(self.screen, (180, 200, 60), eye_pos, eye_size - 1)
             
             # Inner iris detail
