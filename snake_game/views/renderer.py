@@ -449,7 +449,7 @@ class GameRenderer:
         self._draw_smooth_snake_body(smooth_points, segments)
     
     def _create_smooth_snake_path(self, points: list):
-        """Create a completely smooth path through the snake segments with proper arcing.
+        """Create a completely smooth path through the snake segments with proper head handling.
         
         Args:
             points: List of screen coordinate points
@@ -462,15 +462,21 @@ class GameRenderer:
         
         if len(points) == 2:
             # For short snake, interpolate between head and tail
-            return self._interpolate_points(points[0], points[1], 5)
+            return self._interpolate_points(points[0], points[1], 8)
         
         smooth_points = []
         
-        # Start with head
+        # Start with head - ensure smooth start
         smooth_points.append(points[0])
         
-        # Create smooth curves between all segments
-        for i in range(len(points) - 1):
+        # Handle first segment specially to avoid head humpback
+        if len(points) > 2:
+            # Smooth transition from head to first body segment
+            head_to_first = self._interpolate_points(points[0], points[1], 10)
+            smooth_points.extend(head_to_first[1:])  # Skip first point (already added)
+        
+        # Create smooth curves between remaining segments
+        for i in range(1, len(points) - 1):
             start_point = points[i]
             end_point = points[i + 1]
             
@@ -485,7 +491,9 @@ class GameRenderer:
                 smooth_points.extend(interpolated[1:])  # Skip first point (already added)
             else:
                 # Create curved path considering neighboring segments
-                curved_points = self._create_curved_segment(start_point, end_point, prev_point, next_point)
+                # Reduce curve intensity near head to prevent humpback
+                curve_intensity = min(1.0, i / 3.0)  # Gradual curve increase from head
+                curved_points = self._create_curved_segment(start_point, end_point, prev_point, next_point, curve_intensity)
                 smooth_points.extend(curved_points[1:])  # Skip first point (already added)
         
         return smooth_points
@@ -509,14 +517,15 @@ class GameRenderer:
             points.append((x, y))
         return points
     
-    def _create_curved_segment(self, start_point, end_point, prev_point, next_point):
-        """Create a curved segment with enhanced smoothness and arcing.
+    def _create_curved_segment(self, start_point, end_point, prev_point, next_point, curve_intensity=1.0):
+        """Create a curved segment with enhanced smoothness and controlled arcing.
         
         Args:
             start_point: Current segment start
             end_point: Current segment end
             prev_point: Previous segment (for curve context)
             next_point: Next segment (for curve context)
+            curve_intensity: Intensity of curve (0.0 to 1.0) to control near-head smoothness
             
         Returns:
             List of points forming an ultra-smooth curve
@@ -533,13 +542,14 @@ class GameRenderer:
                 # Full spline with 4 control points and tension adjustment
                 point = self._enhanced_catmull_rom_spline(prev_point, start_point, end_point, next_point, t)
             else:
-                # Enhanced interpolation with better curve bias
-                # Create more pronounced arc even without full context
+                # Enhanced interpolation with controlled curve bias
+                # Create more pronounced arc but controlled by curve_intensity
                 mid_x = (start_point[0] + end_point[0]) / 2
                 mid_y = (start_point[1] + end_point[1]) / 2
                 
-                # Enhanced curve factor for better arcing
-                curve_factor = 0.4 * math.sin(t * math.pi)  # Increased from 0.2
+                # Enhanced curve factor with intensity control
+                base_curve_factor = 0.4 * math.sin(t * math.pi)
+                curve_factor = base_curve_factor * curve_intensity  # Apply intensity control
                 
                 # Perpendicular offset for enhanced curve
                 dx = end_point[0] - start_point[0]
@@ -547,7 +557,7 @@ class GameRenderer:
                 length = math.sqrt(dx*dx + dy*dy)
                 
                 if length > 0:
-                    perp_x = -dy / length * curve_factor * 15  # Increased curve strength
+                    perp_x = -dy / length * curve_factor * 15  # Curve strength
                     perp_y = dx / length * curve_factor * 15
                 else:
                     perp_x = perp_y = 0
@@ -613,7 +623,7 @@ class GameRenderer:
             self._draw_enhanced_3d_segment(start_point, end_point, thickness, progress, i)
     
     def _draw_enhanced_3d_segment(self, start_point, end_point, thickness, progress, segment_index):
-        """Draw a single segment with enhanced 3D effects and shimmer.
+        """Draw a single segment with enhanced 3D effects and shimmer, fixing humpback issue.
         
         Args:
             start_point: Starting point (x, y)
@@ -630,14 +640,6 @@ class GameRenderer:
         if length == 0:
             return
         
-        # Normalize direction
-        norm_dx = dx / length
-        norm_dy = dy / length
-        
-        # Perpendicular vector for width
-        perp_x = -norm_dy
-        perp_y = norm_dx
-        
         # Enhanced color progression with shimmer
         base_intensity = 1.0 - progress * 0.2
         
@@ -646,58 +648,61 @@ class GameRenderer:
         shimmer_wave = math.sin((time_ms * 0.003) + (segment_index * 0.2)) * 0.3 + 0.7
         shimmer_intensity = shimmer_wave * base_intensity
         
-        # Enhanced shading layers for maximum 3D effect
+        # Fixed shading layers with proper thickness progression to eliminate humpback
         shading_layers = [
-            # Deep shadow (bottom/left)
+            # Deep shadow (bottom/left) - reduced offset near head
             {
                 'color': (int(15 * base_intensity), int(60 * base_intensity), int(15 * base_intensity)),
-                'offset': (-0.4, -0.4),
-                'thickness_mult': 1.1
+                'offset': (-0.25, -0.25),  # Reduced from -0.4
+                'thickness_mult': 1.0      # Reduced from 1.1
             },
-            # Main shadow
+            # Main shadow - smoother transition
             {
                 'color': (int(25 * base_intensity), int(90 * base_intensity), int(25 * base_intensity)),
-                'offset': (-0.25, -0.25),
-                'thickness_mult': 1.0
+                'offset': (-0.15, -0.15),  # Reduced from -0.25
+                'thickness_mult': 0.95     # Adjusted for smoother transition
             },
-            # Base body color
+            # Base body color - centered properly
             {
                 'color': (int(34 * base_intensity), int(139 * base_intensity), int(34 * base_intensity)),
                 'offset': (0, 0),
-                'thickness_mult': 0.95
+                'thickness_mult': 0.9      # Slightly reduced for better layering
             },
-            # Mid-tone with shimmer
+            # Mid-tone with shimmer - reduced offset
             {
                 'color': (int(45 * shimmer_intensity), int(170 * shimmer_intensity), int(45 * shimmer_intensity)),
-                'offset': (0.1, 0.1),
-                'thickness_mult': 0.8
+                'offset': (0.08, 0.08),    # Reduced from 0.1
+                'thickness_mult': 0.75     # Adjusted for smoother progression
             },
-            # Bright highlight with shimmer
+            # Bright highlight with shimmer - controlled offset
             {
                 'color': (int(60 * shimmer_intensity), int(220 * shimmer_intensity), int(60 * shimmer_intensity)),
-                'offset': (0.25, 0.25),
-                'thickness_mult': 0.6
+                'offset': (0.15, 0.15),    # Reduced from 0.25
+                'thickness_mult': 0.55     # Adjusted for better proportion
             },
-            # Top shimmer highlight
+            # Top shimmer highlight - minimal offset
             {
                 'color': (int(80 * shimmer_intensity), int(255 * shimmer_intensity), int(80 * shimmer_intensity)),
-                'offset': (0.35, 0.35),
-                'thickness_mult': 0.4
+                'offset': (0.2, 0.2),      # Reduced from 0.35
+                'thickness_mult': 0.35     # Adjusted for proper highlight size
             },
-            # Specular highlight (very bright, small)
+            # Specular highlight - very controlled
             {
                 'color': (int(120 * shimmer_intensity), int(255 * shimmer_intensity), int(120 * shimmer_intensity)),
-                'offset': (0.4, 0.4),
-                'thickness_mult': 0.2
+                'offset': (0.25, 0.25),    # Reduced from 0.4
+                'thickness_mult': 0.15     # Reduced for subtle highlight
             }
         ]
         
-        # Draw each shading layer for maximum 3D effect
+        # Draw each shading layer with improved offset calculation
         for layer in shading_layers:
             layer_thickness = max(1, int(thickness * layer['thickness_mult']))
             
-            # Enhanced offset calculation for better 3D effect
-            offset_distance = thickness * 0.15
+            # Improved offset calculation to prevent humpback
+            # Scale offset based on thickness to maintain proportions
+            offset_scale = min(1.0, thickness / 18.0)  # Normalize to base thickness
+            offset_distance = thickness * 0.1 * offset_scale  # Reduced from 0.15
+            
             offset_x = layer['offset'][0] * offset_distance
             offset_y = layer['offset'][1] * offset_distance
             
