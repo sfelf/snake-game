@@ -97,71 +97,89 @@ class AudioManager:
         try:
             import numpy as np
 
-            # Simple melody notes (frequencies in Hz)
-            melody = [
-                262,
-                294,
-                330,
-                349,
-                392,
-                440,
-                494,
-                523,  # C major scale up
-                523,
-                494,
-                440,
-                392,
-                349,
-                330,
-                294,
-                262,  # C major scale down
-                330,
-                392,
-                440,
-                392,
-                330,
-                294,
-                262,
-                294,  # Simple melody
-                330,
-                349,
-                392,
-                349,
-                330,
-                294,
-                262,
-                262,  # Ending
-            ]
-
+            melody = self._get_melody_notes()
             sample_rate = GameConstants.AUDIO_FREQUENCY
-            note_duration = 0.5  # seconds per note
+            note_duration = 0.5
             frames_per_note = int(note_duration * sample_rate)
             total_frames = len(melody) * frames_per_note
 
-            # Create the audio array
             audio_data = np.zeros((total_frames, 2), dtype=np.int16)
 
             for i, freq in enumerate(melody):
-                start_frame = i * frames_per_note
-
-                # Generate sine wave for this note
-                for j in range(frames_per_note):
-                    if j < frames_per_note * 0.9:  # Add slight gap between notes
-                        # Add some envelope to make it sound more musical
-                        envelope = 1.0
-                        if j < frames_per_note * 0.1:  # Attack
-                            envelope = j / (frames_per_note * 0.1)
-                        elif j > frames_per_note * 0.8:  # Release
-                            envelope = (frames_per_note - j) / (frames_per_note * 0.2)
-
-                        wave = int(
-                            8000 * envelope * np.sin(2 * np.pi * freq * j / sample_rate)
-                        )
-                        audio_data[start_frame + j] = [wave, wave]
+                self._generate_melody_note(
+                    audio_data, i, freq, frames_per_note, sample_rate
+                )
 
             return audio_data.tobytes()
         except ImportError:
             return None
+
+    def _get_melody_notes(self):
+        """Get the melody notes for background music."""
+        return [
+            262,
+            294,
+            330,
+            349,
+            392,
+            440,
+            494,
+            523,  # C major scale up
+            523,
+            494,
+            440,
+            392,
+            349,
+            330,
+            294,
+            262,  # C major scale down
+            330,
+            392,
+            440,
+            392,
+            330,
+            294,
+            262,
+            294,  # Simple melody
+            330,
+            349,
+            392,
+            349,
+            330,
+            294,
+            262,
+            262,  # Ending
+        ]
+
+    def _generate_melody_note(
+        self,
+        audio_data,
+        note_index: int,
+        frequency: float,
+        frames_per_note: int,
+        sample_rate: int,
+    ):
+        """Generate a single note in the melody."""
+        import numpy as np
+
+        start_frame = note_index * frames_per_note
+
+        for j in range(frames_per_note):
+            if j < frames_per_note * 0.9:  # Add slight gap between notes
+                envelope = self._calculate_note_envelope(j, frames_per_note)
+                wave = int(
+                    8000 * envelope * np.sin(2 * np.pi * frequency * j / sample_rate)
+                )
+                audio_data[start_frame + j] = [wave, wave]
+
+    def _calculate_note_envelope(self, frame_index: int, frames_per_note: int) -> float:
+        """Calculate the envelope for a note to make it sound more musical."""
+        envelope = 1.0
+        if frame_index < frames_per_note * 0.1:  # Attack
+            envelope = frame_index / (frames_per_note * 0.1)
+        elif frame_index > frames_per_note * 0.8:  # Release
+            envelope = (frames_per_note - frame_index) / (frames_per_note * 0.2)
+        return envelope
 
     def play_eat_sound(self, urgency_factor: float = 1.0):
         """Play the fruit eating sound.

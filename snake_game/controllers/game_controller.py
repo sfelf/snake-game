@@ -85,25 +85,42 @@ class GameController:
         Args:
             action: Action string to handle
         """
+        if action.startswith("move_"):
+            self._handle_movement_action(action)
+        elif action in ["start_game", "restart_game"]:
+            self._handle_game_start_action(action)
+        elif action in ["show_splash", "show_high_scores", "show_reset_confirm"]:
+            self._handle_navigation_action(action)
+        elif action in ["confirm_reset", "cancel_reset"]:
+            self._handle_reset_action(action)
+
+    def _handle_movement_action(self, action: str) -> None:
+        """Handle movement-related actions."""
+        direction = self.input_handler.get_direction_from_action(action)
+        if direction:
+            self.snake.set_direction(direction)
+
+    def _handle_game_start_action(self, action: str) -> None:
+        """Handle game start actions."""
         if action == "start_game":
             self._start_game()
         elif action == "restart_game":
             self._restart_game()
-        elif action == "show_splash":
-            self.state_manager.set_state(GameState.SPLASH)
-        elif action == "show_high_scores":
-            self.state_manager.set_state(GameState.HIGH_SCORES)
-        elif action == "show_reset_confirm":
-            self.state_manager.set_state(GameState.CONFIRM_RESET)
-        elif action == "confirm_reset":
+
+    def _handle_navigation_action(self, action: str) -> None:
+        """Handle navigation actions."""
+        state_map = {
+            "show_splash": GameState.SPLASH,
+            "show_high_scores": GameState.HIGH_SCORES,
+            "show_reset_confirm": GameState.CONFIRM_RESET,
+        }
+        self.state_manager.set_state(state_map[action])
+
+    def _handle_reset_action(self, action: str) -> None:
+        """Handle reset confirmation actions."""
+        if action == "confirm_reset":
             self.score_manager.reset_high_scores()
-            self.state_manager.set_state(GameState.SPLASH)
-        elif action == "cancel_reset":
-            self.state_manager.set_state(GameState.SPLASH)
-        elif action.startswith("move_"):
-            direction = self.input_handler.get_direction_from_action(action)
-            if direction:
-                self.snake.set_direction(direction)
+        self.state_manager.set_state(GameState.SPLASH)
 
     def _start_game(self) -> None:
         """Start a new game."""

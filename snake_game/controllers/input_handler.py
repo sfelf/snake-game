@@ -33,19 +33,17 @@ class InputHandler:
         if event.key == pygame.K_q:
             return "quit"
 
-        # State-specific input handling
-        if current_state == GameState.SPLASH:
-            return self._handle_splash_input(event)
-        elif current_state == GameState.PLAYING:
-            return self._handle_playing_input(event)
-        elif current_state == GameState.GAME_OVER:
-            return self._handle_game_over_input(event)
-        elif current_state == GameState.HIGH_SCORES:
-            return self._handle_high_scores_input(event)
-        elif current_state == GameState.CONFIRM_RESET:
-            return self._handle_confirm_reset_input(event)
+        # State-specific input handling using dispatch table
+        handlers = {
+            GameState.SPLASH: self._handle_splash_input,
+            GameState.PLAYING: self._handle_playing_input,
+            GameState.GAME_OVER: self._handle_game_over_input,
+            GameState.HIGH_SCORES: self._handle_high_scores_input,
+            GameState.CONFIRM_RESET: self._handle_confirm_reset_input,
+        }
 
-        return None
+        handler = handlers.get(current_state)
+        return handler(event) if handler else None
 
     def _handle_splash_input(self, event: pygame.event.Event) -> Optional[str]:
         """Handle input on the splash screen.

@@ -138,67 +138,16 @@ class SnakeGame:
         try:
             import numpy as np
 
-            # Simple melody notes (frequencies in Hz)
-            melody = [
-                262,
-                294,
-                330,
-                349,
-                392,
-                440,
-                494,
-                523,  # C major scale up
-                523,
-                494,
-                440,
-                392,
-                349,
-                330,
-                294,
-                262,  # C major scale down
-                330,
-                392,
-                440,
-                392,
-                330,
-                294,
-                262,
-                294,  # Simple melody
-                330,
-                349,
-                392,
-                349,
-                330,
-                294,
-                262,
-                262,  # Ending
-            ]
-
+            melody = self._get_melody_notes()
             sample_rate = 22050
-            note_duration = 0.5  # seconds per note
+            note_duration = 0.5
             frames_per_note = int(note_duration * sample_rate)
             total_frames = len(melody) * frames_per_note
 
-            # Create the audio array
             audio_data = np.zeros((total_frames, 2), dtype=np.int16)
 
             for i, freq in enumerate(melody):
-                start_frame = i * frames_per_note
-
-                # Generate sine wave for this note
-                for j in range(frames_per_note):
-                    if j < frames_per_note * 0.9:  # Add slight gap between notes
-                        # Add some envelope to make it sound more musical
-                        envelope = 1.0
-                        if j < frames_per_note * 0.1:  # Attack
-                            envelope = j / (frames_per_note * 0.1)
-                        elif j > frames_per_note * 0.8:  # Release
-                            envelope = (frames_per_note - j) / (frames_per_note * 0.2)
-
-                        wave = int(
-                            8000 * envelope * np.sin(2 * np.pi * freq * j / sample_rate)
-                        )
-                        audio_data[start_frame + j] = [wave, wave]
+                self._generate_note(audio_data, i, freq, frames_per_note, sample_rate)
 
             # Save to temporary file
             temp_file = "temp_music.wav"
@@ -206,6 +155,73 @@ class SnakeGame:
             return temp_file
         except Exception:
             return None
+
+    def _get_melody_notes(self):
+        """Get the melody notes for background music."""
+        return [
+            262,
+            294,
+            330,
+            349,
+            392,
+            440,
+            494,
+            523,  # C major scale up
+            523,
+            494,
+            440,
+            392,
+            349,
+            330,
+            294,
+            262,  # C major scale down
+            330,
+            392,
+            440,
+            392,
+            330,
+            294,
+            262,
+            294,  # Simple melody
+            330,
+            349,
+            392,
+            349,
+            330,
+            294,
+            262,
+            262,  # Ending
+        ]
+
+    def _generate_note(
+        self,
+        audio_data,
+        note_index: int,
+        frequency: float,
+        frames_per_note: int,
+        sample_rate: int,
+    ):
+        """Generate a single note in the audio data."""
+        import numpy as np
+
+        start_frame = note_index * frames_per_note
+
+        for j in range(frames_per_note):
+            if j < frames_per_note * 0.9:  # Add slight gap between notes
+                envelope = self._calculate_envelope(j, frames_per_note)
+                wave = int(
+                    8000 * envelope * np.sin(2 * np.pi * frequency * j / sample_rate)
+                )
+                audio_data[start_frame + j] = [wave, wave]
+
+    def _calculate_envelope(self, frame_index: int, frames_per_note: int) -> float:
+        """Calculate the envelope for a note to make it sound more musical."""
+        envelope = 1.0
+        if frame_index < frames_per_note * 0.1:  # Attack
+            envelope = frame_index / (frames_per_note * 0.1)
+        elif frame_index > frames_per_note * 0.8:  # Release
+            envelope = (frames_per_note - frame_index) / (frames_per_note * 0.2)
+        return envelope
 
     def start_background_music(self):
         """Start playing background music."""
@@ -307,16 +323,17 @@ class SnakeGame:
             if event.key == pygame.K_q:
                 return False  # Signal to quit
 
-            if self.state == GameState.SPLASH:
-                return self._handle_splash_input(event)
-            elif self.state == GameState.PLAYING:
-                return self._handle_playing_input(event)
-            elif self.state == GameState.GAME_OVER:
-                return self._handle_game_over_input(event)
-            elif self.state == GameState.HIGH_SCORES:
-                return self._handle_high_scores_input(event)
-            elif self.state == GameState.CONFIRM_RESET:
-                return self._handle_confirm_reset_input(event)
+            # State-specific input handling using dispatch table
+            handlers = {
+                GameState.SPLASH: self._handle_splash_input,
+                GameState.PLAYING: self._handle_playing_input,
+                GameState.GAME_OVER: self._handle_game_over_input,
+                GameState.HIGH_SCORES: self._handle_high_scores_input,
+                GameState.CONFIRM_RESET: self._handle_confirm_reset_input,
+            }
+
+            handler = handlers.get(self.state)
+            return handler(event) if handler else True
 
         return True  # Continue running
 
@@ -399,37 +416,37 @@ class SnakeGame:
         dx, dy = self.direction.value
         new_head = (head_x + dx, head_y + dy)
 
-        # Check wall collision
-        if (
-            new_head[0] < 0
-            or new_head[0] >= self.GRID_WIDTH
-            or new_head[1] < 0
-            or new_head[1] >= self.GRID_HEIGHT
-        ):
-            self.game_over()
-            return
-
-        # Check self collision
-        if new_head in self.snake:
+        # Check collisions
+        if self._check_wall_collision(new_head) or self._check_self_collision(new_head):
             self.game_over()
             return
 
         # Add new head
         self.snake.insert(0, new_head)
 
-        # Check fruit collision
+        # Handle fruit collision or tail removal
         if new_head == self.fruit_pos:
             self.eat_fruit()
         else:
-            # Remove tail if no fruit eaten
             self.snake.pop()
 
-        # Play move sound (with increasing frequency for urgency)
+        # Play movement sound
+        self._play_movement_sound()
+
+    def _check_wall_collision(self, position) -> bool:
+        """Check if position collides with walls."""
+        x, y = position
+        return x < 0 or x >= self.GRID_WIDTH or y < 0 or y >= self.GRID_HEIGHT
+
+    def _check_self_collision(self, position) -> bool:
+        """Check if position collides with snake body."""
+        return position in self.snake
+
+    def _play_movement_sound(self):
+        """Play movement sound with urgency based on snake length."""
         if self.move_sound and len(self.snake) > self.INITIAL_SNAKE_LENGTH:
-            # Increase pitch based on snake length
             urgency_factor = min(len(self.snake) / 20.0, 2.0)
             try:
-                # Create a higher pitched sound for urgency
                 urgent_sound = pygame.mixer.Sound(
                     buffer=self.generate_tone(880 * urgency_factor, 0.03)
                 )
@@ -512,81 +529,111 @@ class SnakeGame:
 
         name, primary_color, secondary_color = fruit_type.value
 
-        if name == "apple":
-            # Draw apple
-            pygame.draw.circle(self.screen, primary_color, (center_x, center_y + 2), 8)
-            # Apple stem
-            pygame.draw.rect(
-                self.screen, secondary_color, (center_x - 1, screen_y + 2, 2, 4)
-            )
-            # Apple leaf
-            pygame.draw.ellipse(
-                self.screen, secondary_color, (center_x + 2, screen_y + 2, 4, 2)
-            )
+        fruit_drawers = {
+            "apple": lambda: self._draw_game_apple(
+                center_x, center_y, screen_x, screen_y, primary_color, secondary_color
+            ),
+            "pear": lambda: self._draw_game_pear(
+                center_x, center_y, screen_x, screen_y, primary_color, secondary_color
+            ),
+            "banana": lambda: self._draw_game_banana(
+                center_x, center_y, primary_color, secondary_color
+            ),
+            "cherry": lambda: self._draw_game_cherry(
+                center_x, center_y, primary_color, secondary_color
+            ),
+            "orange": lambda: self._draw_game_orange(
+                center_x, center_y, primary_color, secondary_color
+            ),
+        }
 
-        elif name == "pear":
-            # Draw pear shape
-            pygame.draw.circle(self.screen, primary_color, (center_x, center_y + 3), 6)
-            pygame.draw.circle(self.screen, primary_color, (center_x, center_y - 2), 4)
-            # Pear stem
-            pygame.draw.rect(
-                self.screen, secondary_color, (center_x - 1, screen_y + 2, 2, 3)
-            )
+        drawer = fruit_drawers.get(name)
+        if drawer:
+            drawer()
 
-        elif name == "banana":
-            # Draw banana shape
-            points = [
-                (center_x - 6, center_y + 2),
-                (center_x - 4, center_y - 6),
-                (center_x + 2, center_y - 4),
-                (center_x + 6, center_y + 4),
-                (center_x + 2, center_y + 6),
-                (center_x - 4, center_y + 4),
-            ]
-            pygame.draw.polygon(self.screen, primary_color, points)
-            # Banana tip
-            pygame.draw.circle(
-                self.screen, secondary_color, (center_x - 4, center_y - 6), 2
-            )
+    def _draw_game_apple(
+        self,
+        center_x: int,
+        center_y: int,
+        screen_x: int,
+        screen_y: int,
+        primary_color,
+        secondary_color,
+    ):
+        """Draw an apple in the game."""
+        pygame.draw.circle(self.screen, primary_color, (center_x, center_y + 2), 8)
+        pygame.draw.rect(
+            self.screen, secondary_color, (center_x - 1, screen_y + 2, 2, 4)
+        )
+        pygame.draw.ellipse(
+            self.screen, secondary_color, (center_x + 2, screen_y + 2, 4, 2)
+        )
 
-        elif name == "cherry":
-            # Draw cherry (two small circles)
-            pygame.draw.circle(
-                self.screen, primary_color, (center_x - 3, center_y + 2), 5
-            )
-            pygame.draw.circle(
-                self.screen, primary_color, (center_x + 3, center_y + 2), 5
-            )
-            # Cherry stems
-            pygame.draw.line(
-                self.screen,
-                secondary_color,
-                (center_x - 3, center_y - 3),
-                (center_x - 1, center_y - 6),
-                2,
-            )
-            pygame.draw.line(
-                self.screen,
-                secondary_color,
-                (center_x + 3, center_y - 3),
-                (center_x + 1, center_y - 6),
-                2,
-            )
+    def _draw_game_pear(
+        self,
+        center_x: int,
+        center_y: int,
+        screen_x: int,
+        screen_y: int,
+        primary_color,
+        secondary_color,
+    ):
+        """Draw a pear in the game."""
+        pygame.draw.circle(self.screen, primary_color, (center_x, center_y + 3), 6)
+        pygame.draw.circle(self.screen, primary_color, (center_x, center_y - 2), 4)
+        pygame.draw.rect(
+            self.screen, secondary_color, (center_x - 1, screen_y + 2, 2, 3)
+        )
 
-        elif name == "orange":
-            # Draw orange
-            pygame.draw.circle(self.screen, primary_color, (center_x, center_y), 8)
-            # Orange texture (small dots)
-            for i in range(3):
-                for j in range(3):
-                    dot_x = center_x - 4 + i * 3
-                    dot_y = center_y - 4 + j * 3
-                    if (dot_x - center_x) ** 2 + (
-                        dot_y - center_y
-                    ) ** 2 <= 36:  # Inside circle
-                        pygame.draw.circle(
-                            self.screen, secondary_color, (dot_x, dot_y), 1
-                        )
+    def _draw_game_banana(
+        self, center_x: int, center_y: int, primary_color, secondary_color
+    ):
+        """Draw a banana in the game."""
+        points = [
+            (center_x - 6, center_y + 2),
+            (center_x - 4, center_y - 6),
+            (center_x + 2, center_y - 4),
+            (center_x + 6, center_y + 4),
+            (center_x + 2, center_y + 6),
+            (center_x - 4, center_y + 4),
+        ]
+        pygame.draw.polygon(self.screen, primary_color, points)
+        pygame.draw.circle(
+            self.screen, secondary_color, (center_x - 4, center_y - 6), 2
+        )
+
+    def _draw_game_cherry(
+        self, center_x: int, center_y: int, primary_color, secondary_color
+    ):
+        """Draw cherries in the game."""
+        pygame.draw.circle(self.screen, primary_color, (center_x - 3, center_y + 2), 5)
+        pygame.draw.circle(self.screen, primary_color, (center_x + 3, center_y + 2), 5)
+        pygame.draw.line(
+            self.screen,
+            secondary_color,
+            (center_x - 3, center_y - 3),
+            (center_x - 1, center_y - 6),
+            2,
+        )
+        pygame.draw.line(
+            self.screen,
+            secondary_color,
+            (center_x + 3, center_y - 3),
+            (center_x + 1, center_y - 6),
+            2,
+        )
+
+    def _draw_game_orange(
+        self, center_x: int, center_y: int, primary_color, secondary_color
+    ):
+        """Draw an orange in the game."""
+        pygame.draw.circle(self.screen, primary_color, (center_x, center_y), 8)
+        for i in range(3):
+            for j in range(3):
+                dot_x = center_x - 4 + i * 3
+                dot_y = center_y - 4 + j * 3
+                if (dot_x - center_x) ** 2 + (dot_y - center_y) ** 2 <= 36:
+                    pygame.draw.circle(self.screen, secondary_color, (dot_x, dot_y), 1)
 
     def draw_border(self):
         """Draw the game border."""
@@ -647,7 +694,11 @@ class SnakeGame:
 
     def draw_splash_graphics(self):
         """Draw graphics for the splash screen."""
-        # Draw a decorative snake
+        self._draw_decorative_snake()
+        self._draw_decorative_fruits()
+
+    def _draw_decorative_snake(self):
+        """Draw a decorative snake for the splash screen."""
         snake_points = []
         center_x = self.WINDOW_WIDTH // 2
         for i in range(8):
@@ -660,13 +711,18 @@ class SnakeGame:
             color = self.GREEN if i == len(snake_points) - 1 else self.DARK_GREEN
             pygame.draw.circle(self.screen, color, (x, y), 12)
             if i == len(snake_points) - 1:  # Head
-                # Eyes
-                pygame.draw.circle(self.screen, self.WHITE, (x + 4, y - 3), 3)
-                pygame.draw.circle(self.screen, self.WHITE, (x + 4, y + 3), 3)
-                pygame.draw.circle(self.screen, self.BLACK, (x + 4, y - 3), 2)
-                pygame.draw.circle(self.screen, self.BLACK, (x + 4, y + 3), 2)
+                self._draw_snake_eyes(x, y)
 
-        # Draw some decorative fruits around
+    def _draw_snake_eyes(self, x: int, y: int):
+        """Draw eyes on the snake head."""
+        pygame.draw.circle(self.screen, self.WHITE, (x + 4, y - 3), 3)
+        pygame.draw.circle(self.screen, self.WHITE, (x + 4, y + 3), 3)
+        pygame.draw.circle(self.screen, self.BLACK, (x + 4, y - 3), 2)
+        pygame.draw.circle(self.screen, self.BLACK, (x + 4, y + 3), 2)
+
+    def _draw_decorative_fruits(self):
+        """Draw decorative fruits around the splash screen."""
+        center_x = self.WINDOW_WIDTH // 2
         fruits = [
             (100, 200, FruitType.APPLE),
             (self.WINDOW_WIDTH - 100, 180, FruitType.BANANA),
@@ -676,57 +732,78 @@ class SnakeGame:
         ]
 
         for x, y, fruit_type in fruits:
-            # Draw directly at pixel coordinates
-            screen_x = x - self.CELL_SIZE // 2
-            screen_y = y - self.CELL_SIZE // 2
-            center_x_fruit = screen_x + self.CELL_SIZE // 2
-            center_y_fruit = screen_y + self.CELL_SIZE // 2
+            self._draw_splash_fruit(x, y, fruit_type)
 
-            name, primary_color, secondary_color = fruit_type.value
+    def _draw_splash_fruit(self, x: int, y: int, fruit_type: FruitType):
+        """Draw a single fruit on the splash screen."""
+        screen_x = x - self.CELL_SIZE // 2
+        screen_y = y - self.CELL_SIZE // 2
+        center_x_fruit = screen_x + self.CELL_SIZE // 2
+        center_y_fruit = screen_y + self.CELL_SIZE // 2
 
-            if name == "apple":
-                pygame.draw.circle(
-                    self.screen, primary_color, (center_x_fruit, center_y_fruit + 2), 12
-                )
-                pygame.draw.rect(
-                    self.screen,
-                    secondary_color,
-                    (center_x_fruit - 1, screen_y + 2, 2, 6),
-                )
-            elif name == "banana":
-                points = [
-                    (center_x_fruit - 8, center_y_fruit + 3),
-                    (center_x_fruit - 6, center_y_fruit - 8),
-                    (center_x_fruit + 3, center_y_fruit - 6),
-                    (center_x_fruit + 8, center_y_fruit + 6),
-                    (center_x_fruit + 3, center_y_fruit + 8),
-                    (center_x_fruit - 6, center_y_fruit + 6),
-                ]
-                pygame.draw.polygon(self.screen, primary_color, points)
-            elif name == "cherry":
-                pygame.draw.circle(
-                    self.screen,
-                    primary_color,
-                    (center_x_fruit - 4, center_y_fruit + 3),
-                    7,
-                )
-                pygame.draw.circle(
-                    self.screen,
-                    primary_color,
-                    (center_x_fruit + 4, center_y_fruit + 3),
-                    7,
-                )
-            elif name == "orange":
-                pygame.draw.circle(
-                    self.screen, primary_color, (center_x_fruit, center_y_fruit), 12
-                )
-            elif name == "pear":
-                pygame.draw.circle(
-                    self.screen, primary_color, (center_x_fruit, center_y_fruit + 4), 8
-                )
-                pygame.draw.circle(
-                    self.screen, primary_color, (center_x_fruit, center_y_fruit - 3), 6
-                )
+        name, primary_color, secondary_color = fruit_type.value
+
+        fruit_drawers = {
+            "apple": lambda: self._draw_splash_apple(
+                center_x_fruit, center_y_fruit, screen_y, primary_color, secondary_color
+            ),
+            "banana": lambda: self._draw_splash_banana(
+                center_x_fruit, center_y_fruit, primary_color
+            ),
+            "cherry": lambda: self._draw_splash_cherry(
+                center_x_fruit, center_y_fruit, primary_color
+            ),
+            "orange": lambda: self._draw_splash_orange(
+                center_x_fruit, center_y_fruit, primary_color
+            ),
+            "pear": lambda: self._draw_splash_pear(
+                center_x_fruit, center_y_fruit, primary_color
+            ),
+        }
+
+        drawer = fruit_drawers.get(name)
+        if drawer:
+            drawer()
+
+    def _draw_splash_apple(
+        self,
+        center_x: int,
+        center_y: int,
+        screen_y: int,
+        primary_color,
+        secondary_color,
+    ):
+        """Draw an apple on the splash screen."""
+        pygame.draw.circle(self.screen, primary_color, (center_x, center_y + 2), 12)
+        pygame.draw.rect(
+            self.screen, secondary_color, (center_x - 1, screen_y + 2, 2, 6)
+        )
+
+    def _draw_splash_banana(self, center_x: int, center_y: int, primary_color):
+        """Draw a banana on the splash screen."""
+        points = [
+            (center_x - 8, center_y + 3),
+            (center_x - 6, center_y - 8),
+            (center_x + 3, center_y - 6),
+            (center_x + 8, center_y + 6),
+            (center_x + 3, center_y + 8),
+            (center_x - 6, center_y + 6),
+        ]
+        pygame.draw.polygon(self.screen, primary_color, points)
+
+    def _draw_splash_cherry(self, center_x: int, center_y: int, primary_color):
+        """Draw cherries on the splash screen."""
+        pygame.draw.circle(self.screen, primary_color, (center_x - 4, center_y + 3), 7)
+        pygame.draw.circle(self.screen, primary_color, (center_x + 4, center_y + 3), 7)
+
+    def _draw_splash_orange(self, center_x: int, center_y: int, primary_color):
+        """Draw an orange on the splash screen."""
+        pygame.draw.circle(self.screen, primary_color, (center_x, center_y), 12)
+
+    def _draw_splash_pear(self, center_x: int, center_y: int, primary_color):
+        """Draw a pear on the splash screen."""
+        pygame.draw.circle(self.screen, primary_color, (center_x, center_y + 4), 8)
+        pygame.draw.circle(self.screen, primary_color, (center_x, center_y - 3), 6)
 
     def draw_splash_screen(self):
         """Draw the splash screen."""
