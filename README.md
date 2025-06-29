@@ -111,6 +111,8 @@
 
 
 
+
+
 A classic Snake game implementation using Python and Pygame with enhanced graphics, professional architecture, and comprehensive testing.
 
 ## Features
