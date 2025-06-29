@@ -3,7 +3,7 @@
 import random
 from typing import List, Tuple
 
-from .enums import FruitType
+from snake_game.models.enums import FruitType
 
 
 class Fruit:

@@ -1,10 +1,10 @@
 """Models package for Snake Game."""
 
-from .enums import Direction, FruitType, GameState
-from .fruit import Fruit
-from .game_state import GameStateManager
-from .score import ScoreManager
-from .snake import Snake
+from snake_game.models.enums import Direction, FruitType, GameState
+from snake_game.models.fruit import Fruit
+from snake_game.models.game_state import GameStateManager
+from snake_game.models.score import ScoreManager
+from snake_game.models.snake import Snake
 
 __all__ = [
     "Direction",

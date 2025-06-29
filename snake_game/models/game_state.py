@@ -1,6 +1,6 @@
 """Game state management for the Snake Game."""
 
-from .enums import GameState
+from snake_game.models.enums import GameState
 
 
 class GameStateManager:

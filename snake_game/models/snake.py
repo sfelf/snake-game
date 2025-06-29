@@ -2,7 +2,7 @@
 
 from typing import List, Tuple
 
-from .enums import Direction
+from snake_game.models.enums import Direction
 
 
 class Snake:
