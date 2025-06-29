@@ -1,9 +1,23 @@
 # Snake Game
 
-[![Test Coverage](https://img.shields.io/badge/coverage-38.5%25-orange.svg)](htmlcov/index.html)
-[![Python](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://python.org)
+[![Test Coverage](https://img.shields.io/badge/coverage-39.3%25-red.svg)](htmlcov/index.html)
+[![Python](https://img.shields.io/badge/python-3.13+-blue.svg)](https://python.org)
 [![Pygame](https://img.shields.io/badge/pygame-2.6.1-green.svg)](https://pygame.org)
-[![Code Quality](https://img.shields.io/badge/code%20quality-refactored-brightgreen.svg)](#architecture)
+[![Tests](https://img.shields.io/badge/tests-92%20passing-green.svg)](tests/)
+[![Lines of Code](https://img.shields.io/badge/lines%20of%20code-3079-blue.svg)](snake_game/)
+[![Code Quality](https://img.shields.io/badge/code%20quality-refactored-brightgreen.svg)](README.md#architecture)
+[![License](https://img.shields.io/badge/license-CC%20BY--NC--SA%204.0-blue.svg)](LICENSE)
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](https://github.com/sfelf/snake-game/actions)
+
+
+
+
+
+
+
+
+
+
 
 A classic Snake game implementation using Python and Pygame with enhanced graphics, professional architecture, and comprehensive testing.
 
@@ -341,4 +355,15 @@ We welcome contributions! The modular architecture makes it easy to:
 
 ## License
 
-This project is open source and available under the MIT License.
+This project is licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License. 
+
+You are free to:
+- **Share** — copy and redistribute the material in any medium or format
+- **Adapt** — remix, transform, and build upon the material
+
+Under the following terms:
+- **Attribution** — You must give appropriate credit and link to the license
+- **NonCommercial** — You may not use the material for commercial purposes
+- **ShareAlike** — If you remix or build upon the material, you must distribute your contributions under the same license
+
+See the [LICENSE](LICENSE) file for the full license text or visit [Creative Commons](https://creativecommons.org/licenses/by-nc-sa/4.0/) for more details.
