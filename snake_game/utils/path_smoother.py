@@ -3,7 +3,7 @@
 import math
 from typing import List, Optional, Tuple
 
-from . import GameConstants
+from snake_game.utils.constants import GameConstants
 
 
 class PathSmoother:

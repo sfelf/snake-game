@@ -9,6 +9,13 @@ from typing import List
 
 import pygame
 
+try:
+    import numpy as np
+
+    NUMPY_AVAILABLE = True
+except ImportError:
+    NUMPY_AVAILABLE = False
+
 
 class Direction(Enum):
     """Direction enumeration for snake movement."""
@@ -135,9 +142,10 @@ class SnakeGame:
 
     def generate_melody(self):
         """Generate a simple melodic background music."""
-        try:
-            import numpy as np
+        if not NUMPY_AVAILABLE:
+            return None
 
+        try:
             melody = self._get_melody_notes()
             sample_rate = 22050
             note_duration = 0.5
@@ -202,8 +210,6 @@ class SnakeGame:
         sample_rate: int,
     ):
         """Generate a single note in the audio data."""
-        import numpy as np
-
         start_frame = note_index * frames_per_note
 
         for j in range(frames_per_note):
@@ -244,7 +250,8 @@ class SnakeGame:
 
     def generate_tone(self, frequency: float, duration: float) -> bytes:
         """Generate a simple tone for sound effects."""
-        import numpy as np
+        if not NUMPY_AVAILABLE:
+            return b""
 
         sample_rate = 22050
         frames = int(duration * sample_rate)

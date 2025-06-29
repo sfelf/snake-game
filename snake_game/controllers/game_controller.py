@@ -7,10 +7,10 @@ Licensed under CC BY-NC-SA 4.0 (https://creativecommons.org/licenses/by-nc-sa/4.
 
 import pygame
 
-from ..models import Fruit, GameState, GameStateManager, ScoreManager, Snake
-from ..utils import AudioManager, GameConstants
-from ..views import GameRenderer
-from .input_handler import InputHandler
+from snake_game.controllers.input_handler import InputHandler
+from snake_game.models import Fruit, GameState, GameStateManager, ScoreManager, Snake
+from snake_game.utils import AudioManager, GameConstants
+from snake_game.views import GameRenderer
 
 
 class GameController:

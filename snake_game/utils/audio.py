@@ -4,7 +4,14 @@ from typing import Optional
 
 import pygame
 
-from .constants import GameConstants
+try:
+    import numpy as np
+
+    NUMPY_AVAILABLE = True
+except ImportError:
+    NUMPY_AVAILABLE = False
+
+from snake_game.utils.constants import GameConstants
 
 
 class AudioManager:
@@ -71,9 +78,10 @@ class AudioManager:
         Returns:
             Audio data as bytes
         """
-        try:
-            import numpy as np
+        if not NUMPY_AVAILABLE:
+            return b""
 
+        try:
             sample_rate = GameConstants.AUDIO_FREQUENCY
             frames = int(duration * sample_rate)
             arr = np.zeros((frames, 2), dtype=np.int16)
@@ -94,9 +102,10 @@ class AudioManager:
         Returns:
             Audio data as bytes or None if generation fails
         """
-        try:
-            import numpy as np
+        if not NUMPY_AVAILABLE:
+            return None
 
+        try:
             melody = self._get_melody_notes()
             sample_rate = GameConstants.AUDIO_FREQUENCY
             note_duration = 0.5
@@ -160,8 +169,6 @@ class AudioManager:
         sample_rate: int,
     ):
         """Generate a single note in the melody."""
-        import numpy as np
-
         start_frame = note_index * frames_per_note
 
         for j in range(frames_per_note):

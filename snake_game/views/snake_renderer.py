@@ -5,8 +5,8 @@ from typing import List, Tuple
 
 import pygame
 
-from ..models import Direction
-from ..utils import GameConstants
+from snake_game.models import Direction
+from snake_game.utils import GameConstants
 
 
 class SnakeBodyRenderer:

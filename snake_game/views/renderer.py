@@ -1,14 +1,19 @@
 """Game renderer for the Snake Game."""
 
 import math
+import os
 from typing import List
 
 import pygame
 
-from ..models import Direction, Fruit, FruitType, Snake
-from ..utils import GameConstants
-from ..utils.path_smoother import PathSmoother
-from .snake_renderer import SnakeBodyRenderer, SnakeHeadRenderer, SnakeScaleRenderer
+from snake_game.models import Direction, Fruit, FruitType, Snake
+from snake_game.utils import GameConstants
+from snake_game.utils.path_smoother import PathSmoother
+from snake_game.views.snake_renderer import (
+    SnakeBodyRenderer,
+    SnakeHeadRenderer,
+    SnakeScaleRenderer,
+)
 
 
 class GameRenderer:
@@ -64,8 +69,6 @@ class GameRenderer:
 
     def _get_assets_directory(self) -> str:
         """Get the path to the assets directory."""
-        import os
-
         return os.path.join(
             os.path.dirname(os.path.dirname(__file__)), "assets", "images"
         )
@@ -80,8 +83,6 @@ class GameRenderer:
         Returns:
             True if loaded successfully, False otherwise
         """
-        import os
-
         image_path = os.path.join(assets_dir, f"{fruit_name}.png")
         try:
             if os.path.exists(image_path):

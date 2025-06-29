@@ -6,8 +6,9 @@ Licensed under CC BY-NC-SA 4.0 (https://creativecommons.org/licenses/by-nc-sa/4.
 """
 
 import sys
+import traceback
 
-from .controllers import GameController
+from snake_game.controllers import GameController
 
 
 def main():
@@ -19,8 +20,6 @@ def main():
         print("\nGame interrupted by user")
     except Exception as e:
         print(f"An error occurred: {e}")
-        import traceback
-
         traceback.print_exc()
     finally:
         sys.exit()

@@ -4,7 +4,7 @@ from typing import Optional
 
 import pygame
 
-from ..models import Direction, GameState
+from snake_game.models import Direction, GameState
 
 
 class InputHandler:

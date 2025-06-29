@@ -5,9 +5,13 @@ extend-ignore =
     E266,
     E501,
     W503
-select = B,C,E,F,I,W,T4,B9,D,TI
+select = B,C,E,F,I,W,T4,B9,D,TI,ABS
 max-complexity = 12
 docstring-convention = google
+# Import order style
+import-order-style = google
+# Require absolute imports
+require-absolute-imports = true
 per-file-ignores =
     __init__.py:F401,D104
     tests/*:D100,D101,D102,D103,D104
