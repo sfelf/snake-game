@@ -1,10 +1,12 @@
 """Pytest configuration and fixtures."""
 
-import pytest
-import pygame
-import tempfile
 import os
-from snake_game.models import Snake, Fruit, ScoreManager, GameStateManager
+import tempfile
+
+import pygame
+import pytest
+
+from snake_game.models import Fruit, GameStateManager, ScoreManager, Snake
 from snake_game.utils import GameConstants
 
 
@@ -31,7 +33,7 @@ def fruit():
 @pytest.fixture
 def temp_scores_file():
     """Create a temporary scores file for testing."""
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
         temp_file = f.name
     yield temp_file
     # Clean up

@@ -130,6 +130,28 @@ poetry run pytest --cov=snake_game --cov-report=html
 
 ## Code Quality Standards
 
+### Automated Tools
+The project uses comprehensive code quality tools that run automatically:
+
+- **Black**: Code formatting (88 char line length)
+- **isort**: Import organization and sorting
+- **flake8**: Linting with multiple plugins (bugbear, tidy-imports, docstrings, comprehensions)
+- **mypy**: Static type checking
+
+See [CODE_QUALITY.md](CODE_QUALITY.md) for detailed configuration and usage.
+
+### Running Quality Tools
+```bash
+# Format and check all code
+poetry run python scripts/format-code.py
+
+# Individual tools
+poetry run black snake_game tests scripts
+poetry run isort snake_game tests scripts
+poetry run flake8 snake_game tests scripts
+poetry run mypy snake_game
+```
+
 ### Architecture Principles
 - **Separation of Concerns**: Each class has a single responsibility
 - **Component-Based Design**: Modular, reusable components
@@ -208,6 +230,31 @@ poetry run python scripts/setup-hooks.py
 # Test hook manually
 .git/hooks/pre-commit
 ```
+
+#### Infinite Loop in Git Hooks
+If you encounter an infinite loop with commits (hooks creating commits that trigger more hooks):
+
+```bash
+# Use the automated fix script
+poetry run python scripts/fix-hook-loop.py
+
+# Or manually fix:
+# 1. Stop any running git processes
+pkill -f git
+
+# 2. Remove lock files
+rm -f .git/*.lock .git/*/*.lock
+
+# 3. Reset staged changes
+git reset HEAD
+
+# 4. Reinstall fixed hooks
+poetry run python scripts/setup-hooks.py
+```
+
+**Root Cause**: The post-commit hook was creating new commits without proper loop detection, causing infinite recursion.
+
+**Fix**: Added safeguards to detect badge update commits and skip hook execution for them.
 
 #### CI/CD Pipeline Failures
 1. Check GitHub Actions tab for detailed logs
