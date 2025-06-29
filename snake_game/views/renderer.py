@@ -48,38 +48,67 @@ class GameRenderer:
         Returns:
             True if images were loaded successfully, False otherwise
         """
-        import os
-
         try:
-            # Path to fruit images
-            assets_dir = os.path.join(
-                os.path.dirname(os.path.dirname(__file__)), "assets", "images"
-            )
-
+            assets_dir = self._get_assets_directory()
             fruit_names = ["apple", "pear", "banana", "cherry", "orange"]
 
+            loaded_count = 0
             for fruit_name in fruit_names:
-                image_path = os.path.join(assets_dir, f"{fruit_name}.png")
-                try:
-                    if os.path.exists(image_path):
-                        # Load and convert image for optimal blitting
-                        image = pygame.image.load(image_path).convert_alpha()
-                        self.fruit_images[fruit_name] = image
-                    else:
-                        print(f"Warning: Could not find {image_path}")
-                except Exception as e:
-                    print(f"Warning: Could not load {fruit_name} image: {e}")
+                if self._load_single_fruit_image(assets_dir, fruit_name):
+                    loaded_count += 1
 
-            if self.fruit_images:
-                print(
-                    f"✓ Loaded {len(self.fruit_images)} high-quality Twemoji fruit images"
-                )
-                return True
-            else:
-                print("⚠️  No fruit images loaded, falling back to custom graphics")
-                return False
+            return self._handle_image_loading_result(loaded_count)
         except Exception as e:
             print(f"Error loading fruit images: {e}")
+            return False
+
+    def _get_assets_directory(self) -> str:
+        """Get the path to the assets directory."""
+        import os
+
+        return os.path.join(
+            os.path.dirname(os.path.dirname(__file__)), "assets", "images"
+        )
+
+    def _load_single_fruit_image(self, assets_dir: str, fruit_name: str) -> bool:
+        """Load a single fruit image.
+
+        Args:
+            assets_dir: Path to assets directory
+            fruit_name: Name of the fruit
+
+        Returns:
+            True if loaded successfully, False otherwise
+        """
+        import os
+
+        image_path = os.path.join(assets_dir, f"{fruit_name}.png")
+        try:
+            if os.path.exists(image_path):
+                image = pygame.image.load(image_path).convert_alpha()
+                self.fruit_images[fruit_name] = image
+                return True
+            else:
+                print(f"Warning: Could not find {image_path}")
+                return False
+        except Exception as e:
+            print(f"Warning: Could not load {fruit_name} image: {e}")
+            return False
+
+    def _handle_image_loading_result(self, loaded_count: int) -> bool:
+        """Handle the result of image loading.
+
+        Args:
+            loaded_count: Number of images successfully loaded
+
+        Returns:
+            True if any images were loaded, False otherwise
+        """
+        if loaded_count > 0:
+            print(f"✓ Loaded {loaded_count} high-quality Twemoji fruit images")
+            return True
+        else:
+            print("⚠️  No fruit images loaded, falling back to custom graphics")
             return False
 
     def render_splash_screen(self):
@@ -373,63 +402,71 @@ class GameRenderer:
         """
         name, primary_color, secondary_color = fruit_type.value
 
-        if name == "apple":
-            # Enhanced decorative apple
-            pygame.draw.circle(self.screen, (220, 20, 20), (x, y + 2), 14)
-            pygame.draw.circle(self.screen, (255, 50, 50), (x - 3, y - 1), 10)
-            pygame.draw.rect(self.screen, (101, 67, 33), (x - 1, y - 10, 2, 6))
-            pygame.draw.ellipse(self.screen, (34, 139, 34), (x + 1, y - 10, 8, 4))
-            pygame.draw.circle(self.screen, (255, 200, 200), (x - 4, y - 3), 3)
-        elif name == "banana":
-            # Enhanced decorative banana
-            points = [
-                (x - 10, y + 4),
-                (x - 8, y - 10),
-                (x + 4, y - 8),
-                (x + 12, y + 8),
-                (x + 6, y + 10),
-                (x - 8, y + 8),
-            ]
-            pygame.draw.polygon(self.screen, (255, 255, 0), points)
-            pygame.draw.circle(self.screen, (101, 67, 33), (x - 8, y - 10), 3)
-            pygame.draw.line(
-                self.screen, (200, 200, 0), (x - 6, y - 6), (x + 6, y + 4), 2
-            )
-        elif name == "cherry":
-            # Enhanced decorative cherries
-            pygame.draw.circle(self.screen, (139, 0, 0), (x - 5, y + 3), 9)
-            pygame.draw.circle(self.screen, (220, 20, 60), (x - 5, y + 3), 7)
-            pygame.draw.circle(self.screen, (139, 0, 0), (x + 5, y + 4), 9)
-            pygame.draw.circle(self.screen, (220, 20, 60), (x + 5, y + 4), 7)
-            pygame.draw.line(
-                self.screen, (34, 139, 34), (x - 5, y - 6), (x - 2, y - 12), 3
-            )
-            pygame.draw.line(
-                self.screen, (34, 139, 34), (x + 5, y - 5), (x + 2, y - 12), 3
-            )
-            pygame.draw.circle(self.screen, (255, 100, 100), (x - 7, y + 1), 3)
-            pygame.draw.circle(self.screen, (255, 100, 100), (x + 3, y + 2), 3)
-        elif name == "orange":
-            # Enhanced decorative orange
-            pygame.draw.circle(self.screen, (255, 140, 0), (x, y), 14)
-            pygame.draw.circle(self.screen, (255, 165, 0), (x - 2, y - 2), 10)
-            for i in range(-2, 3):
-                for j in range(-2, 3):
-                    if i == 0 and j == 0:
-                        continue
-                    dot_x = x + i * 4
-                    dot_y = y + j * 4
-                    if (dot_x - x) ** 2 + (dot_y - y) ** 2 <= 100:
-                        pygame.draw.circle(
-                            self.screen, (200, 100, 0), (dot_x, dot_y), 1
-                        )
-            pygame.draw.circle(self.screen, (34, 139, 34), (x, y - 12), 3)
-        elif name == "pear":
-            # Enhanced decorative pear
-            pygame.draw.circle(self.screen, (255, 255, 100), (x, y + 5), 10)
-            pygame.draw.circle(self.screen, (200, 255, 100), (x, y - 2), 7)
-            pygame.draw.rect(self.screen, (101, 67, 33), (x - 1, y - 12, 2, 6))
-            pygame.draw.circle(self.screen, (255, 255, 200), (x - 3, y), 3)
+        fruit_drawers = {
+            "apple": self._draw_decorative_apple,
+            "banana": self._draw_decorative_banana,
+            "cherry": self._draw_decorative_cherry,
+            "orange": self._draw_decorative_orange,
+            "pear": self._draw_decorative_pear,
+        }
+
+        drawer = fruit_drawers.get(name)
+        if drawer:
+            drawer(x, y)
+
+    def _draw_decorative_apple(self, x: int, y: int):
+        """Draw a decorative apple."""
+        pygame.draw.circle(self.screen, (220, 20, 20), (x, y + 2), 14)
+        pygame.draw.circle(self.screen, (255, 50, 50), (x - 3, y - 1), 10)
+        pygame.draw.rect(self.screen, (101, 67, 33), (x - 1, y - 10, 2, 6))
+        pygame.draw.ellipse(self.screen, (34, 139, 34), (x + 1, y - 10, 8, 4))
+        pygame.draw.circle(self.screen, (255, 200, 200), (x - 4, y - 3), 3)
+
+    def _draw_decorative_banana(self, x: int, y: int):
+        """Draw a decorative banana."""
+        points = [
+            (x - 10, y + 4),
+            (x - 8, y - 10),
+            (x + 4, y - 8),
+            (x + 12, y + 8),
+            (x + 6, y + 10),
+            (x - 8, y + 8),
+        ]
+        pygame.draw.polygon(self.screen, (255, 255, 0), points)
+        pygame.draw.circle(self.screen, (101, 67, 33), (x - 8, y - 10), 3)
+        pygame.draw.line(self.screen, (200, 200, 0), (x - 6, y - 6), (x + 6, y + 4), 2)
+
+    def _draw_decorative_cherry(self, x: int, y: int):
+        """Draw decorative cherries."""
+        pygame.draw.circle(self.screen, (139, 0, 0), (x - 5, y + 3), 9)
+        pygame.draw.circle(self.screen, (220, 20, 60), (x - 5, y + 3), 7)
+        pygame.draw.circle(self.screen, (139, 0, 0), (x + 5, y + 4), 9)
+        pygame.draw.circle(self.screen, (220, 20, 60), (x + 5, y + 4), 7)
+        pygame.draw.line(self.screen, (34, 139, 34), (x - 5, y - 6), (x - 2, y - 12), 3)
+        pygame.draw.line(self.screen, (34, 139, 34), (x + 5, y - 5), (x + 2, y - 12), 3)
+        pygame.draw.circle(self.screen, (255, 100, 100), (x - 7, y + 1), 3)
+        pygame.draw.circle(self.screen, (255, 100, 100), (x + 3, y + 2), 3)
+
+    def _draw_decorative_orange(self, x: int, y: int):
+        """Draw a decorative orange."""
+        pygame.draw.circle(self.screen, (255, 140, 0), (x, y), 14)
+        pygame.draw.circle(self.screen, (255, 165, 0), (x - 2, y - 2), 10)
+        for i in range(-2, 3):
+            for j in range(-2, 3):
+                if i == 0 and j == 0:
+                    continue
+                dot_x = x + i * 4
+                dot_y = y + j * 4
+                if (dot_x - x) ** 2 + (dot_y - y) ** 2 <= 100:
+                    pygame.draw.circle(self.screen, (200, 100, 0), (dot_x, dot_y), 1)
+        pygame.draw.circle(self.screen, (34, 139, 34), (x, y - 12), 3)
+
+    def _draw_decorative_pear(self, x: int, y: int):
+        """Draw a decorative pear."""
+        pygame.draw.circle(self.screen, (255, 255, 100), (x, y + 5), 10)
+        pygame.draw.circle(self.screen, (200, 255, 100), (x, y - 2), 7)
+        pygame.draw.rect(self.screen, (101, 67, 33), (x - 1, y - 12, 2, 6))
+        pygame.draw.circle(self.screen, (255, 255, 200), (x - 3, y), 3)
 
     def _draw_ui(self, score: int, length: int, speed: int):
         """Draw the UI area with score and length.
@@ -1682,8 +1719,14 @@ class GameRenderer:
         time_ms = pygame.time.get_ticks()
         shimmer = math.sin(time_ms * 0.003) * 0.3 + 0.7
 
-        # Head scale positions (relative to center)
-        scale_positions = [
+        scale_positions = self._get_head_scale_positions(direction)
+
+        for rel_x, rel_y in scale_positions:
+            self._draw_single_head_scale(center_x + rel_x, center_y + rel_y, shimmer)
+
+    def _get_head_scale_positions(self, direction: Direction):
+        """Get scale positions adjusted for head direction."""
+        base_positions = [
             (-4, -6),
             (0, -7),
             (4, -6),  # Top row
@@ -1699,56 +1742,50 @@ class GameRenderer:
         ]
 
         # Adjust scale positions based on direction
-        if direction == Direction.LEFT:
-            scale_positions = [(-y, x) for x, y in scale_positions]
-        elif direction == Direction.UP:
-            scale_positions = [(y, -x) for x, y in scale_positions]
-        elif direction == Direction.DOWN:
-            scale_positions = [(-y, x) for x, y in scale_positions]
+        direction_transforms = {
+            Direction.LEFT: lambda x, y: (-y, x),
+            Direction.UP: lambda x, y: (y, -x),
+            Direction.DOWN: lambda x, y: (-y, x),
+            Direction.RIGHT: lambda x, y: (x, y),  # No change
+        }
 
-        # Draw individual head scales
-        for rel_x, rel_y in scale_positions:
-            scale_x = center_x + rel_x
-            scale_y = center_y + rel_y
+        transform = direction_transforms.get(direction, lambda x, y: (x, y))
+        return [transform(x, y) for x, y in base_positions]
 
-            # Scale size with shimmer effect
-            scale_size = int(2 * shimmer) + 1
+    def _draw_single_head_scale(self, scale_x: int, scale_y: int, shimmer: float):
+        """Draw a single scale on the snake head."""
+        scale_size = int(2 * shimmer) + 1
+        scale_alpha = int(80 * shimmer)
+        scale_color = (60, 200, 60, scale_alpha)
 
-            # Scale color with shimmer
-            scale_alpha = int(80 * shimmer)
-            scale_color = (60, 200, 60, scale_alpha)
+        # Create scale surface for alpha blending
+        scale_surface = pygame.Surface(
+            (scale_size * 2 + 1, scale_size * 2 + 1), pygame.SRCALPHA
+        )
 
-            # Create scale surface for alpha blending
-            scale_surface = pygame.Surface(
-                (scale_size * 2 + 1, scale_size * 2 + 1), pygame.SRCALPHA
-            )
+        # Draw hexagonal scale shape
+        scale_points = self._get_hexagon_points(scale_size)
+        pygame.draw.polygon(scale_surface, scale_color, scale_points)
 
-            # Draw hexagonal scale shape
-            scale_points = []
-            for i in range(6):
-                angle = i * math.pi / 3
-                px = scale_size * math.cos(angle)
-                py = scale_size * math.sin(angle)
-                scale_points.append((scale_size + px, scale_size + py))
+        # Add scale highlight
+        highlight_color = (100, 255, 100, int(scale_alpha * 0.6))
+        highlight_points = self._get_hexagon_points(scale_size - 1)
 
-            pygame.draw.polygon(scale_surface, scale_color, scale_points)
+        if len(highlight_points) >= 3:
+            pygame.draw.polygon(scale_surface, highlight_color, highlight_points)
 
-            # Add scale highlight
-            highlight_color = (100, 255, 100, int(scale_alpha * 0.6))
-            highlight_points = []
-            for i in range(6):
-                angle = i * math.pi / 3
-                px = (scale_size - 1) * math.cos(angle)
-                py = (scale_size - 1) * math.sin(angle)
-                highlight_points.append((scale_size + px, scale_size + py))
+        # Blit scale to screen
+        self.screen.blit(scale_surface, (scale_x - scale_size, scale_y - scale_size))
 
-            if len(highlight_points) >= 3:
-                pygame.draw.polygon(scale_surface, highlight_color, highlight_points)
-
-            # Blit scale to screen
-            self.screen.blit(
-                scale_surface, (scale_x - scale_size, scale_y - scale_size)
-            )
+    def _get_hexagon_points(self, size: int):
+        """Get points for a hexagonal scale shape."""
+        points = []
+        for i in range(6):
+            angle = i * math.pi / 3
+            px = size * math.cos(angle)
+            py = size * math.sin(angle)
+            points.append((size + px, size + py))
+        return points
 
     def _draw_snake_tongue(self, center_x: int, center_y: int, direction: Direction):
         """Draw a flickering forked tongue.
@@ -1865,117 +1902,111 @@ class GameRenderer:
         center_x = screen_x + GameConstants.CELL_SIZE // 2
         center_y = screen_y + GameConstants.CELL_SIZE // 2
 
-        name = fruit.name
+        fruit_drawers = {
+            "apple": self._draw_custom_apple,
+            "pear": self._draw_custom_pear,
+            "banana": self._draw_custom_banana,
+            "cherry": self._draw_custom_cherry,
+            "orange": self._draw_custom_orange,
+        }
 
-        if name == "apple":
-            # Enhanced apple - more emoji-like
-            pygame.draw.circle(self.screen, (220, 20, 20), (center_x, center_y + 1), 9)
-            pygame.draw.circle(
-                self.screen, (255, 50, 50), (center_x - 2, center_y - 1), 7
-            )
-            pygame.draw.rect(
-                self.screen, (101, 67, 33), (center_x - 1, screen_y + 3, 2, 5)
-            )
-            pygame.draw.ellipse(
-                self.screen, (34, 139, 34), (center_x + 1, screen_y + 3, 6, 3)
-            )
-            pygame.draw.circle(
-                self.screen, (255, 200, 200), (center_x - 3, center_y - 2), 2
-            )
+        drawer = fruit_drawers.get(fruit.name)
+        if drawer:
+            drawer(center_x, center_y, screen_x, screen_y)
 
-        elif name == "pear":
-            # Enhanced pear - more emoji-like
-            pygame.draw.circle(
-                self.screen, (255, 255, 100), (center_x, center_y + 3), 7
-            )
-            pygame.draw.circle(
-                self.screen, (200, 255, 100), (center_x, center_y - 1), 5
-            )
-            pygame.draw.rect(
-                self.screen, (101, 67, 33), (center_x - 1, screen_y + 3, 2, 4)
-            )
-            pygame.draw.circle(
-                self.screen, (255, 255, 200), (center_x - 2, center_y), 2
-            )
+    def _draw_custom_apple(
+        self, center_x: int, center_y: int, screen_x: int, screen_y: int
+    ):
+        """Draw a custom apple."""
+        pygame.draw.circle(self.screen, (220, 20, 20), (center_x, center_y + 1), 9)
+        pygame.draw.circle(self.screen, (255, 50, 50), (center_x - 2, center_y - 1), 7)
+        pygame.draw.rect(self.screen, (101, 67, 33), (center_x - 1, screen_y + 3, 2, 5))
+        pygame.draw.ellipse(
+            self.screen, (34, 139, 34), (center_x + 1, screen_y + 3, 6, 3)
+        )
+        pygame.draw.circle(
+            self.screen, (255, 200, 200), (center_x - 3, center_y - 2), 2
+        )
 
-        elif name == "banana":
-            # Enhanced banana - more emoji-like curved shape
-            points = [
-                (center_x - 7, center_y + 3),
-                (center_x - 5, center_y - 7),
-                (center_x + 1, center_y - 6),
-                (center_x + 7, center_y + 5),
-                (center_x + 4, center_y + 7),
-                (center_x - 4, center_y + 5),
-            ]
-            pygame.draw.polygon(self.screen, (255, 255, 0), points)
-            pygame.draw.circle(
-                self.screen, (101, 67, 33), (center_x - 5, center_y - 7), 2
-            )
-            pygame.draw.line(
-                self.screen,
-                (200, 200, 0),
-                (center_x - 4, center_y - 4),
-                (center_x + 3, center_y + 3),
-                1,
-            )
-            pygame.draw.line(
-                self.screen,
-                (200, 200, 0),
-                (center_x - 2, center_y - 5),
-                (center_x + 5, center_y + 2),
-                1,
-            )
+    def _draw_custom_pear(
+        self, center_x: int, center_y: int, screen_x: int, screen_y: int
+    ):
+        """Draw a custom pear."""
+        pygame.draw.circle(self.screen, (255, 255, 100), (center_x, center_y + 3), 7)
+        pygame.draw.circle(self.screen, (200, 255, 100), (center_x, center_y - 1), 5)
+        pygame.draw.rect(self.screen, (101, 67, 33), (center_x - 1, screen_y + 3, 2, 4))
+        pygame.draw.circle(self.screen, (255, 255, 200), (center_x - 2, center_y), 2)
 
-        elif name == "cherry":
-            # Enhanced cherries - more emoji-like
-            pygame.draw.circle(
-                self.screen, (139, 0, 0), (center_x - 3, center_y + 2), 6
-            )
-            pygame.draw.circle(
-                self.screen, (220, 20, 60), (center_x - 3, center_y + 2), 5
-            )
-            pygame.draw.circle(
-                self.screen, (139, 0, 0), (center_x + 3, center_y + 3), 6
-            )
-            pygame.draw.circle(
-                self.screen, (220, 20, 60), (center_x + 3, center_y + 3), 5
-            )
-            pygame.draw.line(
-                self.screen,
-                (34, 139, 34),
-                (center_x - 3, center_y - 4),
-                (center_x - 1, center_y - 7),
-                2,
-            )
-            pygame.draw.line(
-                self.screen,
-                (34, 139, 34),
-                (center_x + 3, center_y - 3),
-                (center_x + 1, center_y - 7),
-                2,
-            )
-            pygame.draw.circle(
-                self.screen, (255, 100, 100), (center_x - 4, center_y + 1), 2
-            )
-            pygame.draw.circle(
-                self.screen, (255, 100, 100), (center_x + 2, center_y + 2), 2
-            )
+    def _draw_custom_banana(
+        self, center_x: int, center_y: int, screen_x: int, screen_y: int
+    ):
+        """Draw a custom banana."""
+        points = [
+            (center_x - 7, center_y + 3),
+            (center_x - 5, center_y - 7),
+            (center_x + 1, center_y - 6),
+            (center_x + 7, center_y + 5),
+            (center_x + 4, center_y + 7),
+            (center_x - 4, center_y + 5),
+        ]
+        pygame.draw.polygon(self.screen, (255, 255, 0), points)
+        pygame.draw.circle(self.screen, (101, 67, 33), (center_x - 5, center_y - 7), 2)
+        pygame.draw.line(
+            self.screen,
+            (200, 200, 0),
+            (center_x - 4, center_y - 4),
+            (center_x + 3, center_y + 3),
+            1,
+        )
+        pygame.draw.line(
+            self.screen,
+            (200, 200, 0),
+            (center_x - 2, center_y - 5),
+            (center_x + 5, center_y + 2),
+            1,
+        )
 
-        elif name == "orange":
-            # Enhanced orange - more emoji-like with texture
-            pygame.draw.circle(self.screen, (255, 140, 0), (center_x, center_y), 9)
-            pygame.draw.circle(
-                self.screen, (255, 165, 0), (center_x - 1, center_y - 1), 7
-            )
-            for i in range(-1, 2):
-                for j in range(-1, 2):
-                    if i == 0 and j == 0:
-                        continue
-                    dot_x = center_x + i * 3
-                    dot_y = center_y + j * 3
-                    if (dot_x - center_x) ** 2 + (dot_y - center_y) ** 2 <= 49:
-                        pygame.draw.circle(
-                            self.screen, (200, 100, 0), (dot_x, dot_y), 1
-                        )
-            pygame.draw.circle(self.screen, (34, 139, 34), (center_x, center_y - 8), 2)
+    def _draw_custom_cherry(
+        self, center_x: int, center_y: int, screen_x: int, screen_y: int
+    ):
+        """Draw custom cherries."""
+        pygame.draw.circle(self.screen, (139, 0, 0), (center_x - 3, center_y + 2), 6)
+        pygame.draw.circle(self.screen, (220, 20, 60), (center_x - 3, center_y + 2), 5)
+        pygame.draw.circle(self.screen, (139, 0, 0), (center_x + 3, center_y + 3), 6)
+        pygame.draw.circle(self.screen, (220, 20, 60), (center_x + 3, center_y + 3), 5)
+        pygame.draw.line(
+            self.screen,
+            (34, 139, 34),
+            (center_x - 3, center_y - 4),
+            (center_x - 1, center_y - 7),
+            2,
+        )
+        pygame.draw.line(
+            self.screen,
+            (34, 139, 34),
+            (center_x + 3, center_y - 3),
+            (center_x + 1, center_y - 7),
+            2,
+        )
+        pygame.draw.circle(
+            self.screen, (255, 100, 100), (center_x - 4, center_y + 1), 2
+        )
+        pygame.draw.circle(
+            self.screen, (255, 100, 100), (center_x + 2, center_y + 2), 2
+        )
+
+    def _draw_custom_orange(
+        self, center_x: int, center_y: int, screen_x: int, screen_y: int
+    ):
+        """Draw a custom orange."""
+        pygame.draw.circle(self.screen, (255, 140, 0), (center_x, center_y), 9)
+        pygame.draw.circle(self.screen, (255, 165, 0), (center_x - 1, center_y - 1), 7)
+        for i in range(-1, 2):
+            for j in range(-1, 2):
+                if i == 0 and j == 0:
+                    continue
+                dot_x = center_x + i * 3
+                dot_y = center_y + j * 3
+                if (dot_x - center_x) ** 2 + (dot_y - center_y) ** 2 <= 49:
+                    pygame.draw.circle(self.screen, (200, 100, 0), (dot_x, dot_y), 1)
+        pygame.draw.circle(self.screen, (34, 139, 34), (center_x, center_y - 8), 2)
