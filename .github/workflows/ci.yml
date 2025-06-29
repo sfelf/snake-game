@@ -86,10 +86,18 @@ jobs:
     - name: Install dependencies
       run: poetry install
     
-    - name: Run linting
-      run: |
-        poetry run python -m py_compile snake_game/**/*.py
-        echo "✅ All Python files compile successfully"
+    - name: Run isort
+      run: poetry run isort --check-only --diff snake_game tests scripts
+    
+    - name: Run black
+      run: poetry run black --check --diff snake_game tests scripts
+    
+    - name: Run flake8
+      run: poetry run flake8 snake_game tests scripts
+    
+    - name: Run mypy
+      run: poetry run mypy snake_game
+      continue-on-error: true  # Allow mypy to fail for now
 
   security:
     runs-on: ubuntu-latest
