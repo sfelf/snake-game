@@ -8,8 +8,10 @@ extend-ignore =
 select = B,C,E,F,I,W,T4,B9,D,TI,ABS
 max-complexity = 12
 docstring-convention = google
-# Import order style
-import-order-style = google
+# Import order style - match isort configuration
+import-order-style = pep8
+# Define application import names for proper import grouping
+application-import-names = snake_game
 # Require absolute imports
 require-absolute-imports = true
 per-file-ignores =

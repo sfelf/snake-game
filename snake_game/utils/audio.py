@@ -2,14 +2,8 @@
 
 from typing import Optional
 
+import numpy as np
 import pygame
-
-try:
-    import numpy as np
-
-    NUMPY_AVAILABLE = True
-except ImportError:
-    NUMPY_AVAILABLE = False
 
 from snake_game.utils.constants import GameConstants
 
@@ -78,9 +72,6 @@ class AudioManager:
         Returns:
             Audio data as bytes
         """
-        if not NUMPY_AVAILABLE:
-            return b""
-
         try:
             sample_rate = GameConstants.AUDIO_FREQUENCY
             frames = int(duration * sample_rate)
@@ -102,9 +93,6 @@ class AudioManager:
         Returns:
             Audio data as bytes or None if generation fails
         """
-        if not NUMPY_AVAILABLE:
-            return None
-
         try:
             melody = self._get_melody_notes()
             sample_rate = GameConstants.AUDIO_FREQUENCY

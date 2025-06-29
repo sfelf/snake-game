@@ -7,14 +7,8 @@ import random
 from enum import Enum
 from typing import List
 
+import numpy as np
 import pygame
-
-try:
-    import numpy as np
-
-    NUMPY_AVAILABLE = True
-except ImportError:
-    NUMPY_AVAILABLE = False
 
 
 class Direction(Enum):
@@ -142,9 +136,6 @@ class SnakeGame:
 
     def generate_melody(self):
         """Generate a simple melodic background music."""
-        if not NUMPY_AVAILABLE:
-            return None
-
         try:
             melody = self._get_melody_notes()
             sample_rate = 22050
@@ -250,9 +241,6 @@ class SnakeGame:
 
     def generate_tone(self, frequency: float, duration: float) -> bytes:
         """Generate a simple tone for sound effects."""
-        if not NUMPY_AVAILABLE:
-            return b""
-
         sample_rate = 22050
         frames = int(duration * sample_rate)
         arr = np.zeros((frames, 2), dtype=np.int16)
