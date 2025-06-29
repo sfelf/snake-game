@@ -5,7 +5,7 @@ import math
 import os
 import random
 from enum import Enum
-from typing import List, Optional, Tuple
+from typing import List
 
 import pygame
 
@@ -117,7 +117,7 @@ class SnakeGame:
                 buffer=self.generate_tone(220, 0.5)
             )
             self.move_sound = pygame.mixer.Sound(buffer=self.generate_tone(880, 0.05))
-        except:
+        except Exception:
             # Fallback if sound generation fails
             self.eat_sound = None
             self.game_over_sound = None
@@ -130,7 +130,7 @@ class SnakeGame:
             self.background_music = self.generate_melody()
             if self.background_music:
                 pygame.mixer.music.load(self.background_music)
-        except:
+        except Exception:
             self.background_music = None
 
     def generate_melody(self):
@@ -184,7 +184,6 @@ class SnakeGame:
 
             for i, freq in enumerate(melody):
                 start_frame = i * frames_per_note
-                end_frame = start_frame + frames_per_note
 
                 # Generate sine wave for this note
                 for j in range(frames_per_note):
@@ -205,7 +204,7 @@ class SnakeGame:
             temp_file = "temp_music.wav"
             pygame.sndarray.make_sound(audio_data).play()
             return temp_file
-        except:
+        except Exception:
             return None
 
     def start_background_music(self):
@@ -215,7 +214,7 @@ class SnakeGame:
                 pygame.mixer.music.play(-1, 0.0)  # Loop indefinitely
                 pygame.mixer.music.set_volume(0.3)
                 self.music_playing = True
-            except:
+            except Exception:
                 pass
 
     def stop_background_music(self):
@@ -224,7 +223,7 @@ class SnakeGame:
             try:
                 pygame.mixer.music.stop()
                 self.music_playing = False
-            except:
+            except Exception:
                 pass
 
     def generate_tone(self, frequency: float, duration: float) -> bytes:
@@ -250,7 +249,7 @@ class SnakeGame:
                 with open(scores_file, "r") as f:
                     scores = json.load(f)
                     return sorted(scores, reverse=True)[:5]
-        except:
+        except Exception:
             pass
         return [0, 0, 0, 0, 0]  # Start with all zeros
 
@@ -260,7 +259,7 @@ class SnakeGame:
         try:
             with open(scores_file, "w") as f:
                 json.dump(self.high_scores, f)
-        except:
+        except Exception:
             pass
 
     def reset_high_scores(self):
@@ -309,56 +308,76 @@ class SnakeGame:
                 return False  # Signal to quit
 
             if self.state == GameState.SPLASH:
-                if event.key == pygame.K_r:
-                    self.state = GameState.CONFIRM_RESET
-                else:
-                    self.state = GameState.PLAYING
-                    self.start_background_music()
-                    self.last_move_time = pygame.time.get_ticks()
-
+                return self._handle_splash_input(event)
             elif self.state == GameState.PLAYING:
-                # Handle direction changes
-                if event.key == pygame.K_UP and self.direction != Direction.DOWN:
-                    self.next_direction = Direction.UP
-                elif event.key == pygame.K_DOWN and self.direction != Direction.UP:
-                    self.next_direction = Direction.DOWN
-                elif event.key == pygame.K_LEFT and self.direction != Direction.RIGHT:
-                    self.next_direction = Direction.LEFT
-                elif event.key == pygame.K_RIGHT and self.direction != Direction.LEFT:
-                    self.next_direction = Direction.RIGHT
-                elif event.key == pygame.K_r:
-                    self.state = GameState.CONFIRM_RESET
-
+                return self._handle_playing_input(event)
             elif self.state == GameState.GAME_OVER:
-                if event.key == pygame.K_SPACE:
-                    self.reset_game()
-                    self.state = GameState.PLAYING
-                    self.start_background_music()
-                    self.last_move_time = pygame.time.get_ticks()
-                elif event.key == pygame.K_h:
-                    self.state = GameState.HIGH_SCORES
-                elif event.key == pygame.K_r:
-                    self.state = GameState.CONFIRM_RESET
-
+                return self._handle_game_over_input(event)
             elif self.state == GameState.HIGH_SCORES:
-                if event.key == pygame.K_SPACE:
-                    self.reset_game()
-                    self.state = GameState.PLAYING
-                    self.start_background_music()
-                    self.last_move_time = pygame.time.get_ticks()
-                elif event.key == pygame.K_ESCAPE:
-                    self.state = GameState.SPLASH
-                elif event.key == pygame.K_r:
-                    self.state = GameState.CONFIRM_RESET
-
+                return self._handle_high_scores_input(event)
             elif self.state == GameState.CONFIRM_RESET:
-                if event.key == pygame.K_y:
-                    self.reset_high_scores()
-                    self.state = GameState.SPLASH
-                elif event.key == pygame.K_n or event.key == pygame.K_ESCAPE:
-                    self.state = GameState.SPLASH
+                return self._handle_confirm_reset_input(event)
 
         return True  # Continue running
+
+    def _handle_splash_input(self, event):
+        """Handle input during splash screen."""
+        if event.key == pygame.K_r:
+            self.state = GameState.CONFIRM_RESET
+        else:
+            self.state = GameState.PLAYING
+            self.start_background_music()
+            self.last_move_time = pygame.time.get_ticks()
+        return True
+
+    def _handle_playing_input(self, event):
+        """Handle input during gameplay."""
+        if event.key == pygame.K_UP and self.direction != Direction.DOWN:
+            self.next_direction = Direction.UP
+        elif event.key == pygame.K_DOWN and self.direction != Direction.UP:
+            self.next_direction = Direction.DOWN
+        elif event.key == pygame.K_LEFT and self.direction != Direction.RIGHT:
+            self.next_direction = Direction.LEFT
+        elif event.key == pygame.K_RIGHT and self.direction != Direction.LEFT:
+            self.next_direction = Direction.RIGHT
+        elif event.key == pygame.K_r:
+            self.state = GameState.CONFIRM_RESET
+        return True
+
+    def _handle_game_over_input(self, event):
+        """Handle input during game over screen."""
+        if event.key == pygame.K_SPACE:
+            self.reset_game()
+            self.state = GameState.PLAYING
+            self.start_background_music()
+            self.last_move_time = pygame.time.get_ticks()
+        elif event.key == pygame.K_h:
+            self.state = GameState.HIGH_SCORES
+        elif event.key == pygame.K_r:
+            self.state = GameState.CONFIRM_RESET
+        return True
+
+    def _handle_high_scores_input(self, event):
+        """Handle input during high scores screen."""
+        if event.key == pygame.K_SPACE:
+            self.reset_game()
+            self.state = GameState.PLAYING
+            self.start_background_music()
+            self.last_move_time = pygame.time.get_ticks()
+        elif event.key == pygame.K_ESCAPE:
+            self.state = GameState.SPLASH
+        elif event.key == pygame.K_r:
+            self.state = GameState.CONFIRM_RESET
+        return True
+
+    def _handle_confirm_reset_input(self, event):
+        """Handle input during reset confirmation."""
+        if event.key == pygame.K_y:
+            self.reset_high_scores()
+            self.state = GameState.SPLASH
+        elif event.key == pygame.K_n or event.key == pygame.K_ESCAPE:
+            self.state = GameState.SPLASH
+        return True
 
     def update_game(self):
         """Update game logic."""
@@ -416,7 +435,7 @@ class SnakeGame:
                 )
                 urgent_sound.set_volume(0.3)
                 urgent_sound.play()
-            except:
+            except Exception:
                 pass
 
     def eat_fruit(self):
@@ -437,7 +456,7 @@ class SnakeGame:
                 )
                 urgent_eat_sound.set_volume(0.5)
                 urgent_eat_sound.play()
-            except:
+            except Exception:
                 pass
 
     def draw_snake_segment(self, x: int, y: int, is_head: bool, segment_index: int):
@@ -657,9 +676,6 @@ class SnakeGame:
         ]
 
         for x, y, fruit_type in fruits:
-            # Convert to grid coordinates for drawing
-            grid_x = (x - self.PLAY_AREA_X) // self.CELL_SIZE
-            grid_y = (y - self.PLAY_AREA_Y) // self.CELL_SIZE
             # Draw directly at pixel coordinates
             screen_x = x - self.CELL_SIZE // 2
             screen_y = y - self.CELL_SIZE // 2

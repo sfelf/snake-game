@@ -5,7 +5,7 @@ from typing import List, Tuple
 
 import pygame
 
-from ..models import Direction, Snake
+from ..models import Direction
 from ..utils import GameConstants
 
 

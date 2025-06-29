@@ -125,10 +125,6 @@ class PathSmoother:
                 )
             else:
                 # Enhanced interpolation with controlled curve bias
-                # Create more pronounced arc but controlled by curve_intensity
-                mid_x = (start_point[0] + end_point[0]) / 2
-                mid_y = (start_point[1] + end_point[1]) / 2
-
                 # Enhanced curve factor with intensity control
                 base_curve_factor = 0.4 * math.sin(t * math.pi)
                 curve_factor = (
