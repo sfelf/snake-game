@@ -55,7 +55,7 @@ class AudioManager:
             melody_data = self._generate_melody()
             if melody_data:
                 # Save melody to a temporary buffer for pygame
-                temp_sound = pygame.mixer.Sound(buffer=melody_data)
+                pygame.mixer.Sound(buffer=melody_data)
                 # Note: For continuous music, we'd need to save to a file
                 # For now, we'll play the generated sound in a loop
         except (pygame.error, ImportError):

@@ -5,11 +5,9 @@ Copyright (c) 2025 Thomas Nelson (https://github.com/sfelf)
 Licensed under CC BY-NC-SA 4.0 (https://creativecommons.org/licenses/by-nc-sa/4.0/)
 """
 
-from typing import Optional
-
 import pygame
 
-from ..models import Direction, Fruit, GameState, GameStateManager, ScoreManager, Snake
+from ..models import Fruit, GameState, GameStateManager, ScoreManager, Snake
 from ..utils import AudioManager, GameConstants
 from ..views import GameRenderer
 from .input_handler import InputHandler
@@ -149,7 +147,7 @@ class GameController:
         will_eat_fruit = self.fruit.is_eaten_by(next_head_pos)
 
         # Move the snake (grow if eating fruit)
-        new_head = self.snake.move(grow=will_eat_fruit)
+        self.snake.move(grow=will_eat_fruit)
 
         # Check wall collision
         if self.snake.check_wall_collision(

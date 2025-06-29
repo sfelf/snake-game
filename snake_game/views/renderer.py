@@ -1,11 +1,11 @@
 """Game renderer for the Snake Game."""
 
 import math
-from typing import List, Tuple
+from typing import List
 
 import pygame
 
-from ..models import Direction, Fruit, FruitType, GameState, Snake
+from ..models import Direction, Fruit, FruitType, Snake
 from ..utils import GameConstants
 from ..utils.path_smoother import PathSmoother
 from .snake_renderer import SnakeBodyRenderer, SnakeHeadRenderer, SnakeScaleRenderer
@@ -659,10 +659,6 @@ class GameRenderer:
                 )
             else:
                 # Enhanced interpolation with controlled curve bias
-                # Create more pronounced arc but controlled by curve_intensity
-                mid_x = (start_point[0] + end_point[0]) / 2
-                mid_y = (start_point[1] + end_point[1]) / 2
-
                 # Enhanced curve factor with intensity control
                 base_curve_factor = 0.4 * math.sin(t * math.pi)
                 curve_factor = (
@@ -736,7 +732,8 @@ class GameRenderer:
             start_point = points[i]
             end_point = points[i + 1]
 
-            # Calculate proper body proportions: thinner at head, widest in middle, tapered to tail
+            # Calculate proper body proportions: thinner at head, widest in middle,
+            # tapered to tail
             progress = i / max(1, len(points) - 1)
 
             # Create natural body thickness curve
@@ -971,7 +968,6 @@ class GameRenderer:
         shimmer_intensity = (primary_shimmer * secondary_shimmer) * base_intensity
 
         # Python pattern variation - create banded pattern
-        pattern_wave = math.sin(segment_index * 0.8) * 0.3 + 0.7
         is_dark_band = (
             segment_index // 3
         ) % 2 == 0  # Alternating bands every 3 segments
@@ -1752,47 +1748,6 @@ class GameRenderer:
             # Blit scale to screen
             self.screen.blit(
                 scale_surface, (scale_x - scale_size, scale_y - scale_size)
-            )
-
-    def _draw_snake_eyes(self, center_x: int, center_y: int, direction: Direction):
-        """Draw realistic snake eyes with proper positioning.
-
-        Args:
-            center_x: Head center x position
-            center_y: Head center y position
-            direction: Snake's current direction
-        """
-        eye_size = 4
-        pupil_size = 2
-
-        # Position eyes based on direction
-        if direction == Direction.RIGHT:
-            eye1_pos = (center_x + 4, center_y - 4)
-            eye2_pos = (center_x + 4, center_y + 4)
-        elif direction == Direction.LEFT:
-            eye1_pos = (center_x - 4, center_y - 4)
-            eye2_pos = (center_x - 4, center_y + 4)
-        elif direction == Direction.UP:
-            eye1_pos = (center_x - 4, center_y - 4)
-            eye2_pos = (center_x + 4, center_y - 4)
-        else:  # DOWN
-            eye1_pos = (center_x - 4, center_y + 4)
-            eye2_pos = (center_x + 4, center_y + 4)
-
-        # Draw eyes with realistic colors
-        for eye_pos in [eye1_pos, eye2_pos]:
-            # Eye white
-            pygame.draw.circle(self.screen, (255, 255, 200), eye_pos, eye_size)
-            # Eye iris (yellow-green)
-            pygame.draw.circle(self.screen, (200, 255, 100), eye_pos, eye_size - 1)
-            # Vertical pupil (like real snakes)
-            pupil_rect = pygame.Rect(
-                eye_pos[0] - 1, eye_pos[1] - pupil_size, 2, pupil_size * 2
-            )
-            pygame.draw.ellipse(self.screen, (0, 0, 0), pupil_rect)
-            # Eye shine
-            pygame.draw.circle(
-                self.screen, (255, 255, 255), (eye_pos[0] - 1, eye_pos[1] - 1), 1
             )
 
     def _draw_snake_tongue(self, center_x: int, center_y: int, direction: Direction):
