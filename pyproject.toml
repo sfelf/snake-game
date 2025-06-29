@@ -2,7 +2,7 @@
 name = "snake-game"
 version = "0.1.0"
 description = "A classic Snake game implementation using pygame"
-authors = ["Thomas Nelson <https://github.com/sfelf>"]
+authors = ["Thomas Nelson (https://github.com/sfelf)"]
 license = "CC-BY-NC-SA-4.0"
 readme = "README.md"
 packages = [{include = "snake_game"}]
