@@ -1,13 +1,17 @@
 # Snake Game
 
-[![Test Coverage](https://img.shields.io/badge/coverage-67.5%25-yellow.svg)](htmlcov/index.html)
+[![Test Coverage](https://img.shields.io/badge/coverage-86.6%25-green.svg)](htmlcov/index.html)
 [![Python](https://img.shields.io/badge/python-3.13+-blue.svg)](https://python.org)
 [![Pygame](https://img.shields.io/badge/pygame-2.6.1-green.svg)](https://pygame.org)
 [![Tests](https://img.shields.io/badge/tests-132%20passing-brightgreen.svg)](tests/)
-[![Lines of Code](https://img.shields.io/badge/lines%20of%20code-3153-blue.svg)](snake_game/)
+[![Lines of Code](https://img.shields.io/badge/lines%20of%20code-2144-blue.svg)](snake_game/)
 [![Code Quality](https://img.shields.io/badge/code%20quality-refactored-brightgreen.svg)](README.md#architecture)
 [![License](https://img.shields.io/badge/license-CC%20BY--NC--SA%204.0-blue.svg)](LICENSE)
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](https://github.com/sfelf/snake-game/actions)
+
+
+
+
 
 
 

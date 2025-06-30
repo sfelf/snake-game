@@ -38,13 +38,11 @@ class GameConstants:
     GREEN: Tuple[int, int, int] = (0, 255, 0)
     DARK_GREEN: Tuple[int, int, int] = (0, 128, 0)
     RED: Tuple[int, int, int] = (255, 0, 0)
-    BLUE: Tuple[int, int, int] = (0, 0, 255)
     YELLOW: Tuple[int, int, int] = (255, 255, 0)
     GRAY: Tuple[int, int, int] = (128, 128, 128)
     LIGHT_GRAY: Tuple[int, int, int] = (200, 200, 200)
     BROWN: Tuple[int, int, int] = (139, 69, 19)
     ORANGE: Tuple[int, int, int] = (255, 165, 0)
-    PURPLE: Tuple[int, int, int] = (128, 0, 128)
 
     # Audio settings
     AUDIO_FREQUENCY = 22050
