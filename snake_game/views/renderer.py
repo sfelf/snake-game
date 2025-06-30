@@ -105,12 +105,7 @@ class GameRenderer:
         Returns:
             True if any images were loaded, False otherwise
         """
-        if loaded_count > 0:
-            print(f"✓ Loaded {loaded_count} high-quality Twemoji fruit images")
-            return True
-        else:
-            print("⚠️  No fruit images loaded, falling back to custom graphics")
-            return False
+        return loaded_count > 0
 
     def render_splash_screen(self):
         """Render the splash screen."""

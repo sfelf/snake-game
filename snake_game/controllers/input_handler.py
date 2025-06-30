@@ -56,6 +56,8 @@ class InputHandler:
         """
         if event.key == pygame.K_r:
             return "show_reset_confirm"
+        elif event.key == pygame.K_h:
+            return "show_high_scores"
         else:
             return "start_game"
 
@@ -68,9 +70,6 @@ class InputHandler:
         Returns:
             Action string or None
         """
-        if event.key == pygame.K_r:
-            return "show_reset_confirm"
-
         # Direction keys
         direction_map = {
             pygame.K_UP: "move_up",

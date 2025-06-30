@@ -38,22 +38,20 @@ class TestInputHandler:
 
     def test_splash_screen_input(self):
         """Test input handling on splash screen."""
-        # Test reset command
-        event = Mock()
-        event.type = pygame.KEYDOWN
-        event.key = pygame.K_r
+        test_cases = [
+            (pygame.K_r, "show_reset_confirm"),
+            (pygame.K_h, "show_high_scores"),
+            (pygame.K_SPACE, "start_game"),
+            (pygame.K_RETURN, "start_game"),
+        ]
 
-        result = self.input_handler.handle_event(event, GameState.SPLASH)
-        assert result == "show_reset_confirm"
+        for key, expected_action in test_cases:
+            event = Mock()
+            event.type = pygame.KEYDOWN
+            event.key = key
 
-        # Test any other key starts game
-        event.key = pygame.K_SPACE
-        result = self.input_handler.handle_event(event, GameState.SPLASH)
-        assert result == "start_game"
-
-        event.key = pygame.K_RETURN
-        result = self.input_handler.handle_event(event, GameState.SPLASH)
-        assert result == "start_game"
+            result = self.input_handler.handle_event(event, GameState.SPLASH)
+            assert result == expected_action
 
     def test_playing_input(self):
         """Test input handling during gameplay."""
@@ -72,14 +70,6 @@ class TestInputHandler:
 
             result = self.input_handler.handle_event(event, GameState.PLAYING)
             assert result == expected_action
-
-        # Test reset command
-        event = Mock()
-        event.type = pygame.KEYDOWN
-        event.key = pygame.K_r
-
-        result = self.input_handler.handle_event(event, GameState.PLAYING)
-        assert result == "show_reset_confirm"
 
     def test_game_over_input(self):
         """Test input handling on game over screen."""
