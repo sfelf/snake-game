@@ -317,28 +317,28 @@ class GameRenderer:
         # Ensure images are loaded
         self._ensure_images_loaded()
 
-        # Draw a decorative snake
-        snake_points = []
+        # Draw a single large snake logo as the main logo
         center_x = GameConstants.WINDOW_WIDTH // 2
-        for i in range(8):
-            x = center_x - 100 + i * 25
-            y = 100 + int(20 * math.sin(i * 0.5))
-            snake_points.append((x, y))
-
-        # Draw snake body
-        for i, (x, y) in enumerate(snake_points):
-            color = (
-                GameConstants.GREEN
-                if i == len(snake_points) - 1
-                else GameConstants.DARK_GREEN
-            )
-            pygame.draw.circle(self.screen, color, (x, y), 12)
-            if i == len(snake_points) - 1:  # Head
-                # Eyes
-                pygame.draw.circle(self.screen, GameConstants.WHITE, (x + 4, y - 3), 3)
-                pygame.draw.circle(self.screen, GameConstants.WHITE, (x + 4, y + 3), 3)
-                pygame.draw.circle(self.screen, GameConstants.BLACK, (x + 4, y - 3), 2)
-                pygame.draw.circle(self.screen, GameConstants.BLACK, (x + 4, y + 3), 2)
+        snake_y = 100
+        
+        # Use the perfect coiled snake image
+        snake_path = os.path.join(self._get_assets_directory(), "perfect_coiled_snake_large.png")
+        
+        if os.path.exists(snake_path):
+            try:
+                snake_image = pygame.image.load(snake_path).convert_alpha()
+                # Scale up the snake image to make it more prominent (128x128, about 33% larger)
+                scaled_snake = pygame.transform.scale(snake_image, (128, 128))
+                snake_rect = scaled_snake.get_rect()
+                snake_rect.center = (center_x, snake_y)
+                self.screen.blit(scaled_snake, snake_rect)
+            except Exception as e:
+                print(f"Warning: Could not load perfect coiled snake: {e}")
+                # Fallback to custom drawn snake
+                self._draw_custom_snake_logo(center_x, snake_y)
+        else:
+            # Fallback to custom drawn snake if image not found
+            self._draw_custom_snake_logo(center_x, snake_y)
 
         # Draw high-quality Twemoji fruits around the screen (avoiding text areas)
         # Text areas: Title at y=200, Instructions from y=280 to y=480
@@ -360,6 +360,35 @@ class GameRenderer:
 
         for x, y, fruit_type in fruits:
             self._draw_decorative_fruit_image(x, y, fruit_type)
+
+    def _draw_custom_snake_logo(self, center_x: int, center_y: int):
+        """Draw a custom snake logo as fallback when emoji is not available.
+        
+        Args:
+            center_x: Center X position for the snake
+            center_y: Center Y position for the snake
+        """
+        # Draw a decorative snake
+        snake_points = []
+        for i in range(8):
+            x = center_x - 100 + i * 25
+            y = center_y + int(20 * math.sin(i * 0.5))
+            snake_points.append((x, y))
+
+        # Draw snake body
+        for i, (x, y) in enumerate(snake_points):
+            color = (
+                GameConstants.GREEN
+                if i == len(snake_points) - 1
+                else GameConstants.DARK_GREEN
+            )
+            pygame.draw.circle(self.screen, color, (x, y), 12)
+            if i == len(snake_points) - 1:  # Head
+                # Eyes
+                pygame.draw.circle(self.screen, GameConstants.WHITE, (x + 4, y - 3), 3)
+                pygame.draw.circle(self.screen, GameConstants.WHITE, (x + 4, y + 3), 3)
+                pygame.draw.circle(self.screen, GameConstants.BLACK, (x + 4, y - 3), 2)
+                pygame.draw.circle(self.screen, GameConstants.BLACK, (x + 4, y + 3), 2)
 
     def _draw_decorative_fruit_image(self, x: int, y: int, fruit_type: FruitType):
         """Draw a decorative fruit using high-quality Twemoji images when available.

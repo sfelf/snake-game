@@ -235,19 +235,21 @@ class TestGameRendererComprehensive:
     @patch("snake_game.views.renderer.pygame.font.Font")
     @patch("snake_game.views.renderer.pygame.draw.circle")
     def test_draw_splash_graphics(self, mock_circle, mock_font):
-        """Test _draw_splash_graphics method."""
+        """Test _draw_splash_graphics method with perfect coiled snake image."""
         mock_screen = Mock()
         mock_font.return_value = Mock()
 
         renderer = GameRenderer(mock_screen)
 
-        with patch.object(renderer, "_ensure_images_loaded"), patch.object(
-            renderer, "_draw_decorative_fruit_custom"
-        ):
+        with patch.object(renderer, "_ensure_images_loaded"), \
+             patch.object(renderer, "_draw_decorative_fruit_custom"), \
+             patch("snake_game.views.renderer.os.path.exists", return_value=False), \
+             patch.object(renderer, "_draw_custom_snake_logo") as mock_custom_snake:
+            
             renderer._draw_splash_graphics()
 
-            # Verify circles were drawn for decorative snake
-            assert mock_circle.call_count > 0
+            # Since image doesn't exist, should fall back to custom snake
+            mock_custom_snake.assert_called_once()
 
     @patch("snake_game.views.renderer.pygame.font.Font")
     @patch("snake_game.views.renderer.pygame.draw.rect")
