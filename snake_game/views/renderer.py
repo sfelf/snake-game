@@ -2,7 +2,7 @@
 
 import math
 import os
-from typing import List
+from typing import Dict, List
 
 import pygame
 
@@ -36,7 +36,7 @@ class GameRenderer:
         self.snake_scale_renderer = SnakeScaleRenderer(screen)
 
         # Load fruit images (after pygame display is initialized)
-        self.fruit_images = {}
+        self.fruit_images: Dict[str, pygame.Surface] = {}
         self.use_images = False
         # Delay loading until first render to ensure pygame is fully initialized
         self._images_loaded = False
@@ -320,10 +320,12 @@ class GameRenderer:
         # Draw a single large snake logo as the main logo
         center_x = GameConstants.WINDOW_WIDTH // 2
         snake_y = 100
-        
+
         # Use the perfect coiled snake image
-        snake_path = os.path.join(self._get_assets_directory(), "perfect_coiled_snake_large.png")
-        
+        snake_path = os.path.join(
+            self._get_assets_directory(), "perfect_coiled_snake_large.png"
+        )
+
         if os.path.exists(snake_path):
             try:
                 snake_image = pygame.image.load(snake_path).convert_alpha()
@@ -363,7 +365,7 @@ class GameRenderer:
 
     def _draw_custom_snake_logo(self, center_x: int, center_y: int):
         """Draw a custom snake logo as fallback when emoji is not available.
-        
+
         Args:
             center_x: Center X position for the snake
             center_y: Center Y position for the snake

@@ -1,7 +1,7 @@
 """Snake rendering components with proper separation of concerns."""
 
 import math
-from typing import List, Tuple
+from typing import List, Tuple, TypedDict
 
 import pygame
 
@@ -9,10 +9,19 @@ from snake_game.models import Direction
 from snake_game.utils import GameConstants
 
 
+class HeadLayer(TypedDict):
+    """Configuration for one rendered layer of the snake's head."""
+
+    color: Tuple[int, int, int]
+    offset: Tuple[int, int]
+    size_mult: float
+
+
 class SnakeBodyRenderer:
     """Handles rendering of the snake body with proper proportions and effects."""
 
     def __init__(self, screen: pygame.Surface):
+        """Initialize the body renderer."""
         self.screen = screen
 
     def draw_body(self, points: List[Tuple[int, int]], segments: List[Tuple[int, int]]):
@@ -351,6 +360,7 @@ class SnakeHeadRenderer:
     """Handles rendering of the snake head with realistic features."""
 
     def __init__(self, screen: pygame.Surface):
+        """Initialize the head renderer."""
         self.screen = screen
 
     def draw_head(self, x: int, y: int, direction: Direction):
@@ -398,7 +408,7 @@ class SnakeHeadRenderer:
         shimmer = math.sin(time_ms * 0.002) * 0.2 + 0.8
 
         # Green head layers with proper elongated shape
-        head_layers = [
+        head_layers: List[HeadLayer] = [
             {
                 "color": (int(15 * shimmer), int(60 * shimmer), int(15 * shimmer)),
                 "offset": (-2, -2),
@@ -595,6 +605,7 @@ class SnakeScaleRenderer:
     """Handles rendering of snake scales and texture details."""
 
     def __init__(self, screen: pygame.Surface):
+        """Initialize the scale renderer."""
         self.screen = screen
 
     def draw_scales(self, points: List[Tuple[int, int]]):

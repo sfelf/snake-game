@@ -1,4 +1,4 @@
-"""Snake Game Package
+"""Snake Game package.
 
 A classic Snake game implementation using pygame.
 """

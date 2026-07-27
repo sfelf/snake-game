@@ -1,9 +1,8 @@
 """Comprehensive tests for GameRenderer to improve coverage."""
 
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import pygame
-import pytest
 
 from snake_game.models import Direction, Fruit, FruitType, Snake
 from snake_game.views.renderer import GameRenderer
@@ -115,8 +114,9 @@ class TestGameRendererComprehensive:
 
         renderer = GameRenderer(mock_screen)
 
-        with patch.object(renderer, "_ensure_images_loaded"), patch.object(
-            renderer, "_draw_splash_graphics"
+        with (
+            patch.object(renderer, "_ensure_images_loaded"),
+            patch.object(renderer, "_draw_splash_graphics"),
         ):
             renderer.render_splash_screen()
 
@@ -150,14 +150,13 @@ class TestGameRendererComprehensive:
 
         renderer = GameRenderer(mock_screen)
 
-        with patch.object(renderer, "_ensure_images_loaded"), patch.object(
-            renderer, "_draw_ui"
-        ), patch.object(renderer.snake_body_renderer, "draw_body"), patch.object(
-            renderer.snake_head_renderer, "draw_head"
-        ), patch.object(
-            renderer.snake_scale_renderer, "draw_scales"
-        ), patch(
-            "snake_game.views.renderer.pygame.draw.circle"
+        with (
+            patch.object(renderer, "_ensure_images_loaded"),
+            patch.object(renderer, "_draw_ui"),
+            patch.object(renderer.snake_body_renderer, "draw_body"),
+            patch.object(renderer.snake_head_renderer, "draw_head"),
+            patch.object(renderer.snake_scale_renderer, "draw_scales"),
+            patch("snake_game.views.renderer.pygame.draw.circle"),
         ):
             renderer.render_game_screen(mock_snake, mock_fruit, 100, 5)
 
@@ -241,11 +240,13 @@ class TestGameRendererComprehensive:
 
         renderer = GameRenderer(mock_screen)
 
-        with patch.object(renderer, "_ensure_images_loaded"), \
-             patch.object(renderer, "_draw_decorative_fruit_custom"), \
-             patch("snake_game.views.renderer.os.path.exists", return_value=False), \
-             patch.object(renderer, "_draw_custom_snake_logo") as mock_custom_snake:
-            
+        with (
+            patch.object(renderer, "_ensure_images_loaded"),
+            patch.object(renderer, "_draw_decorative_fruit_custom"),
+            patch("snake_game.views.renderer.os.path.exists", return_value=False),
+            patch.object(renderer, "_draw_custom_snake_logo") as mock_custom_snake,
+        ):
+
             renderer._draw_splash_graphics()
 
             # Since image doesn't exist, should fall back to custom snake

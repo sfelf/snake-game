@@ -12,7 +12,6 @@ class InputHandler:
 
     def __init__(self):
         """Initialize the input handler."""
-        pass
 
     def handle_event(
         self, event: pygame.event.Event, current_state: GameState

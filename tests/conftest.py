@@ -3,11 +3,14 @@
 import os
 import tempfile
 
-import pygame
-import pytest
+# Pygame must use headless drivers before it is imported and initialized.
+os.environ.setdefault("SDL_AUDIODRIVER", "dummy")
+os.environ.setdefault("SDL_VIDEODRIVER", "dummy")
 
-from snake_game.models import Fruit, GameStateManager, ScoreManager, Snake
-from snake_game.utils import GameConstants
+import pygame  # noqa: E402
+import pytest  # noqa: E402
+
+from snake_game.models import Fruit, GameStateManager, ScoreManager, Snake  # noqa: E402
 
 
 @pytest.fixture(scope="session", autouse=True)

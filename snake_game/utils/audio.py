@@ -82,7 +82,7 @@ class AudioManager:
                 wave = int(16383 * np.sin(2 * np.pi * frequency * i / sample_rate))
                 arr[i] = [wave, wave]
 
-            return arr.tobytes()
+            return bytes(arr.tobytes())
         except ImportError:
             # Return empty bytes if numpy is not available
             return b""
@@ -107,7 +107,7 @@ class AudioManager:
                     audio_data, i, freq, frames_per_note, sample_rate
                 )
 
-            return audio_data.tobytes()
+            return bytes(audio_data.tobytes())
         except ImportError:
             return None
 

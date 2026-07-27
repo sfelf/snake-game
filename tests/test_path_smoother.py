@@ -1,9 +1,5 @@
 """Tests for path smoothing utilities."""
 
-import math
-
-import pytest
-
 from snake_game.utils.path_smoother import PathSmoother
 
 

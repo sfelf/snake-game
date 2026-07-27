@@ -1,9 +1,8 @@
 """Tests for game controllers."""
 
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 
 import pygame
-import pytest
 
 from snake_game.controllers import InputHandler
 from snake_game.models import Direction, GameState

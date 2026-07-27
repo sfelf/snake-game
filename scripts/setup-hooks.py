@@ -1,10 +1,49 @@
 #!/usr/bin/env python3
-"""Setup Git hooks for automated badge updates."""
+"""Set up Git hooks for local validation."""
 
 import os
-import shutil
 import stat
 from pathlib import Path
+
+
+def remove_legacy_post_commit_hook(
+    hooks_dir: Path | None = None,
+) -> bool:
+    """Remove the obsolete badge hook without touching unrelated user hooks.
+
+    Args:
+        hooks_dir: Directory containing the repository's Git hooks.
+
+    Returns:
+        True when a legacy managed hook was removed, otherwise False.
+    """
+    resolved_hooks_dir = hooks_dir or Path(".git/hooks")
+    post_commit_hook = resolved_hooks_dir / "post-commit"
+    if not post_commit_hook.exists():
+        return False
+
+    try:
+        hook_content = post_commit_hook.read_text(encoding="utf-8")
+    except OSError as error:
+        print(f"⚠️  Could not inspect existing {post_commit_hook}: {error}")
+        return False
+
+    managed_markers = (
+        "scripts/generate_badges.py",
+        'git commit -m "Update badges [skip ci]"',
+    )
+    if not all(marker in hook_content for marker in managed_markers):
+        print(f"ℹ️  Preserved unrelated existing hook at {post_commit_hook}")
+        return False
+
+    try:
+        post_commit_hook.unlink()
+    except OSError as error:
+        print(f"⚠️  Could not remove legacy {post_commit_hook}: {error}")
+        return False
+
+    print(f"✅ Removed legacy badge hook at {post_commit_hook}")
+    return True
 
 
 def setup_pre_commit_hook():
@@ -16,13 +55,7 @@ def setup_pre_commit_hook():
 
     # Create the hook script
     hook_content = """#!/bin/bash
-# Pre-commit hook to update badges and run tests
-
-# Check if this is a badge update commit to prevent unnecessary work
-if git diff --cached --name-only | grep -q "README.md\\|badges/" && git diff --cached --quiet -- . ':!README.md' ':!badges/'; then
-    echo "📝 Skipping pre-commit checks (badge-only commit)"
-    exit 0
-fi
+# Pre-commit hook to run local validation
 
 echo "🔄 Running pre-commit checks..."
 
@@ -51,51 +84,9 @@ exit $exit_code
     print(f"✅ Pre-commit hook installed at {pre_commit_hook}")
 
 
-def setup_post_commit_hook():
-    """Setup post-commit hook for badge updates."""
-    hooks_dir = Path(".git/hooks")
-    hooks_dir.mkdir(exist_ok=True)
-
-    post_commit_hook = hooks_dir / "post-commit"
-
-    # Create the hook script
-    hook_content = """#!/bin/bash
-# Post-commit hook to update badges after successful commit
-
-# Check if this is already a badge update commit to prevent infinite loop
-if git log -1 --pretty=%B | grep -q "Update badges \\[skip ci\\]"; then
-    echo "📝 Skipping badge update (already a badge commit)"
-    exit 0
-fi
-
-echo "🔄 Updating badges after commit..."
-
-# Generate updated badges
-poetry run python scripts/generate_badges.py
-
-# Check if badges were updated
-if git diff --quiet README.md badges/; then
-    echo "📝 No badge updates needed"
-else
-    echo "📝 Badges updated, creating follow-up commit..."
-    git add README.md badges/
-    git commit -m "Update badges [skip ci]" --no-verify
-fi
-"""
-
-    with open(post_commit_hook, "w") as f:
-        f.write(hook_content)
-
-    # Make the hook executable
-    st = os.stat(post_commit_hook)
-    os.chmod(post_commit_hook, st.st_mode | stat.S_IEXEC)
-
-    print(f"✅ Post-commit hook installed at {post_commit_hook}")
-
-
 def main():
     """Main setup function."""
-    print("🔧 Setting up Git hooks for automated badge updates...")
+    print("🔧 Setting up Git hooks for local validation...")
 
     # Ensure we're in a git repository
     if not Path(".git").exists():
@@ -114,14 +105,13 @@ def main():
         os.chmod(script, st.st_mode | stat.S_IEXEC)
 
     # Setup hooks
+    remove_legacy_post_commit_hook()
     setup_pre_commit_hook()
-    setup_post_commit_hook()
 
     print("\n🎉 Git hooks setup complete!")
     print("\n📋 What happens now:")
-    print("   • Before each commit: Tests run and badges update")
-    print("   • After each commit: Badges are committed if changed")
-    print("   • On GitHub: CI/CD pipeline runs with full testing")
+    print("   • Before each commit: Formatting and tests run")
+    print("   • On GitHub: CI runs tests, quality checks, and security scanning")
     print("\n💡 To disable hooks temporarily: git commit --no-verify")
 
     return 0

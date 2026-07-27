@@ -1,11 +1,11 @@
 """Tests for the refactored game renderer."""
 
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import pygame
 import pytest
 
-from snake_game.models import Direction, Snake
+from snake_game.models import Direction
 from snake_game.views.renderer import GameRenderer
 
 

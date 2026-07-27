@@ -3,7 +3,6 @@
 from unittest.mock import Mock
 
 import pygame
-import pytest
 
 from snake_game.controllers.input_handler import InputHandler
 from snake_game.models import Direction, GameState
