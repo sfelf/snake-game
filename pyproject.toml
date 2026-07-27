@@ -11,18 +11,18 @@ packages = [{include = "snake_game"}]
 python = "^3.13"
 pygame = "2.6.1"
 numpy = "^2.3.1"
-pillow = "^11.2.1"
-requests = "^2.32.4"
-setuptools = "<81"
+pillow = "^12.3.0"
+requests = "^2.33.0"
+setuptools = "<84"
 
 [tool.poetry.scripts]
 snake-game = "snake_game.main:main"
 
 [tool.poetry.group.dev.dependencies]
-pytest = "^8.4.1"
+pytest = "^9.0.3"
 pytest-cov = "^4.1.0"
 coverage = "^7.3.0"
-black = "^25.1.0"
+black = "^26.3.1"
 flake8 = "^6.1.0"
 flake8-bugbear = "^23.12.2"
 flake8-tidy-imports = "^4.10.0"
