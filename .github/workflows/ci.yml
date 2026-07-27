@@ -1,113 +1,151 @@
-name: CI/CD Pipeline
+name: CI
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
   pull_request:
-    branches: [ main ]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  POETRY_VERSION: "2.4.1"
+  PYTHON_VERSION: "3.13"
+  SDL_AUDIODRIVER: dummy
+  SDL_VIDEODRIVER: dummy
 
 jobs:
   test:
+    name: Test (Python 3.13)
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: [3.8, 3.9, "3.10", "3.11", "3.12"]
+    timeout-minutes: 15
 
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ matrix.python-version }}
-    
-    - name: Install Poetry
-      uses: snok/install-poetry@v1
-      with:
-        version: latest
-        virtualenvs-create: true
-        virtualenvs-in-project: true
-    
-    - name: Load cached venv
-      id: cached-poetry-dependencies
-      uses: actions/cache@v3
-      with:
-        path: .venv
-        key: venv-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock') }}
-    
-    - name: Install dependencies
-      if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-      run: poetry install --no-interaction --no-root
-    
-    - name: Install project
-      run: poetry install --no-interaction
-    
-    - name: Run tests with coverage
-      run: |
-        poetry run pytest --cov=snake_game --cov-report=xml --cov-report=json --cov-report=html --cov-report=term-missing
-    
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
-      with:
-        file: ./coverage.xml
-        flags: unittests
-        name: codecov-umbrella
-        fail_ci_if_error: false
-    
-    - name: Generate coverage badge
-      if: matrix.python-version == '3.11' && github.ref == 'refs/heads/main'
-      run: |
-        poetry run python scripts/generate_badges.py
-    
-    - name: Update README badges
-      if: matrix.python-version == '3.11' && github.ref == 'refs/heads/main'
-      run: |
-        git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"
-        if [[ `git status --porcelain` ]]; then
-          git add README.md badges/
-          git commit -m "Update badges [skip ci]" || exit 0
-          git push
-        fi
+      - name: Check out repository
+        uses: actions/checkout@v6
 
-  lint:
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install Poetry
+        run: pipx install "poetry==${POETRY_VERSION}"
+
+      - name: Restore Poetry cache
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/pypoetry
+          key: poetry-${{ runner.os }}-${{ env.PYTHON_VERSION }}-${{ hashFiles('poetry.lock') }}
+          restore-keys: |
+            poetry-${{ runner.os }}-${{ env.PYTHON_VERSION }}-
+
+      - name: Install dependencies
+        run: poetry sync --no-interaction
+
+      - name: Run tests with coverage
+        run: >-
+          poetry run pytest
+          --cov=snake_game
+          --cov-fail-under=85
+          --cov-report=xml
+          --cov-report=json
+          --cov-report=html
+          --cov-report=term-missing
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v6
+        with:
+          files: ./coverage.xml
+          flags: unittests
+          name: python-3.13
+          fail_ci_if_error: false
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: coverage-report-python-3.13
+          path: |
+            coverage.json
+            coverage.xml
+            htmlcov/
+          if-no-files-found: warn
+          retention-days: 14
+
+  quality:
+    name: Code quality
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: "3.11"
-    
-    - name: Install Poetry
-      uses: snok/install-poetry@v1
-    
-    - name: Install dependencies
-      run: poetry install
-    
-    - name: Run isort
-      run: poetry run isort --check-only --diff snake_game tests scripts
-    
-    - name: Run black
-      run: poetry run black --check --diff snake_game tests scripts
-    
-    - name: Run flake8
-      run: poetry run flake8 snake_game tests scripts
-    
-    - name: Run mypy
-      run: poetry run mypy snake_game
-      continue-on-error: true  # Allow mypy to fail for now
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install Poetry
+        run: pipx install "poetry==${POETRY_VERSION}"
+
+      - name: Restore Poetry cache
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/pypoetry
+          key: poetry-${{ runner.os }}-${{ env.PYTHON_VERSION }}-${{ hashFiles('poetry.lock') }}
+          restore-keys: |
+            poetry-${{ runner.os }}-${{ env.PYTHON_VERSION }}-
+
+      - name: Install dependencies
+        run: poetry sync --no-interaction
+
+      - name: Check import sorting
+        run: poetry run isort --check-only --diff snake_game tests scripts
+
+      - name: Check formatting
+        run: poetry run black --workers 1 --check --diff snake_game tests scripts
+
+      - name: Run lint checks
+        run: poetry run flake8 snake_game tests scripts
+
+      - name: Run type checks
+        run: poetry run mypy snake_game
 
   security:
+    name: Security
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Run Bandit Security Scan
-      uses: securecodewarrior/github-action-bandit@v1
-      with:
-        path: "snake_game"
-        level: "low"
-        confidence: "low"
-        exit_zero: true
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install Poetry
+        run: pipx install "poetry==${POETRY_VERSION}"
+
+      - name: Restore Poetry cache
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/pypoetry
+          key: poetry-${{ runner.os }}-${{ env.PYTHON_VERSION }}-${{ hashFiles('poetry.lock') }}
+          restore-keys: |
+            poetry-${{ runner.os }}-${{ env.PYTHON_VERSION }}-
+
+      - name: Install security dependencies
+        run: poetry sync --no-interaction --only dev
+
+      - name: Run Bandit security scan
+        run: poetry run bandit --recursive --severity-level medium snake_game

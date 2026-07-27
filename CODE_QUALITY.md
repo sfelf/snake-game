@@ -6,8 +6,8 @@ This document outlines the code quality tools and standards used in the Snake Ga
 
 ### **Black** - Code Formatter
 - **Purpose**: Automatic code formatting for consistent style
-- **Configuration**: 88 character line length, Python 3.8+ compatibility
-- **Usage**: `poetry run black snake_game tests scripts`
+- **Configuration**: 88 character line length, Python 3.13 compatibility
+- **Usage**: `poetry run black --workers 1 snake_game tests scripts`
 
 ### **isort** - Import Sorter
 - **Purpose**: Organize and sort import statements
@@ -34,7 +34,7 @@ This document outlines the code quality tools and standards used in the Snake Ga
 ```toml
 [tool.black]
 line-length = 88
-target-version = ['py38', 'py39', 'py310', 'py311', 'py312']
+target-version = ['py313']
 include = '\.pyi?$'
 ```
 

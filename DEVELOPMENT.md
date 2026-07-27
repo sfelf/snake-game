@@ -2,35 +2,33 @@
 
 This document provides comprehensive information for developers working on the Snake Game project.
 
-## Automated Badge System
+## CI Status Badges
 
 ### Overview
-The project uses an automated badge system that updates on every commit to keep README badges current with the latest project status.
+The README uses live GitHub Actions and Codecov badges. CI does not modify the
+repository or create follow-up badge commits.
 
 ### Badge Types
-- **Coverage**: Test coverage percentage with color coding
+- **CI**: Current GitHub Actions workflow status
+- **Coverage**: Current Codecov result
 - **Python**: Python version requirement
 - **Pygame**: Pygame version used
-- **Tests**: Number of passing tests
-- **Lines of Code**: Total lines of code in the project
-- **Code Quality**: Current code quality status
 - **License**: Project license (CC BY-NC-SA 4.0 - Non-Commercial)
-- **Build Status**: CI/CD pipeline status
 
 ### Automation Components
 
 #### 1. Git Hooks
-- **Pre-commit Hook**: Runs tests and updates badges before each commit
-- **Post-commit Hook**: Commits badge updates if changes were made
+- **Pre-commit Hook**: Formats code, runs lint checks, and runs tests
+- **Post-commit Hook**: Not installed; commits are never generated automatically
 
 #### 2. GitHub Actions
-- **CI/CD Pipeline**: Runs on every push and pull request
-- **Multi-Python Testing**: Tests against Python 3.8-3.12
+- **CI Pipeline**: Runs on every push and pull request
+- **Python Testing**: Tests against the supported Python 3.13 runtime
 - **Coverage Reporting**: Uploads coverage to Codecov
-- **Badge Generation**: Updates badges on main branch commits
+- **Quality Checks**: Enforces Black, isort, flake8, and mypy
+- **Security Scanning**: Enforces Bandit medium/high severity findings
 
 #### 3. Scripts
-- `scripts/generate_badges.py`: Main badge generation script
 - `scripts/pre-commit-hook.py`: Pre-commit validation script
 - `scripts/setup-hooks.py`: Git hooks installation script
 
@@ -41,38 +39,11 @@ The project uses an automated badge system that updates on every commit to keep 
 # Install development dependencies
 poetry install
 
-# Setup Git hooks for automated badge updates
+# Set up the local validation hook
 poetry run python scripts/setup-hooks.py
-
-# Verify setup by running badge generation
-poetry run python scripts/generate_badges.py
 ```
 
-#### Manual Badge Update
-```bash
-# Generate badges manually
-poetry run python scripts/generate_badges.py
-
-# Run tests and update coverage
-poetry run pytest --cov=snake_game --cov-report=json --cov-report=html
-```
-
-### Badge Color Coding
-
-#### Coverage Badge
-- 🟢 **90%+**: Bright Green
-- 🟢 **80-89%**: Green  
-- 🟡 **70-79%**: Yellow Green
-- 🟡 **60-69%**: Yellow
-- 🟠 **50-59%**: Orange
-- 🔴 **<50%**: Red
-
-#### Test Count Badge
-- 🟢 **100+ tests**: Bright Green
-- 🟢 **50-99 tests**: Green
-- 🟡 **25-49 tests**: Yellow Green
-- 🟡 **10-24 tests**: Yellow
-- 🟠 **<10 tests**: Orange
+Badge state is derived from the external services and requires no manual update.
 
 ### Workflow
 
@@ -81,9 +52,9 @@ poetry run pytest --cov=snake_game --cov-report=json --cov-report=html
 2. Run tests locally: `poetry run pytest`
 3. Commit changes: `git commit -m "Your message"`
 4. Pre-commit hook runs automatically:
+   - Formats imports and Python code
+   - Runs flake8
    - Runs full test suite
-   - Updates badges if needed
-   - Stages badge updates
 5. Push to GitHub: `git push`
 6. GitHub Actions runs CI/CD pipeline
 
@@ -123,8 +94,8 @@ poetry run pytest --cov=snake_game --cov-report=html
 ```
 
 ### Coverage Goals
-- **Target**: 80%+ overall coverage
-- **Current**: 38.5% (growing with each release)
+- **Required**: 85%+ overall coverage
+- **Current**: 85.7%
 - **New Code**: Should have 90%+ coverage
 - **Critical Components**: 95%+ coverage required
 
@@ -180,49 +151,35 @@ poetry run mypy snake_game
 - Manual workflow dispatch
 
 # Jobs
-1. Test (Python 3.8-3.12)
-2. Lint (Code quality checks)
+1. Test (Python 3.13 with coverage)
+2. Code quality (Black, isort, flake8, and mypy)
 3. Security (Bandit security scan)
-4. Badge Update (On main branch only)
 ```
 
 ### Pipeline Steps
 1. **Checkout Code**: Get latest code
-2. **Setup Python**: Install Python version matrix
-3. **Install Poetry**: Package manager setup
+2. **Setup Python**: Install Python 3.13
+3. **Install Poetry**: Install the pinned package manager version
 4. **Cache Dependencies**: Speed up builds
 5. **Install Dependencies**: Project requirements
 6. **Run Tests**: Full test suite with coverage
 7. **Upload Coverage**: Send to Codecov
-8. **Generate Badges**: Update project badges
-9. **Commit Updates**: Auto-commit badge changes
+8. **Upload Artifacts**: Retain coverage reports for inspection
 
 ### Status Checks
 - ✅ **All Tests Pass**: Required for merge
 - ✅ **Coverage Maintained**: No significant drops
-- ✅ **Security Scan**: No high-severity issues
+- ✅ **Security Scan**: No medium- or high-severity issues
 - ✅ **Code Quality**: Meets project standards
 
 ## Troubleshooting
 
 ### Common Issues
 
-#### Badge Generation Fails
-```bash
-# Check coverage.json exists
-ls -la coverage.json
-
-# Regenerate coverage data
-poetry run pytest --cov=snake_game --cov-report=json
-
-# Run badge generation manually
-poetry run python scripts/generate_badges.py
-```
-
 #### Git Hooks Not Working
 ```bash
 # Check hook files exist and are executable
-ls -la .git/hooks/pre-commit .git/hooks/post-commit
+ls -la .git/hooks/pre-commit
 
 # Reinstall hooks
 poetry run python scripts/setup-hooks.py
@@ -230,31 +187,6 @@ poetry run python scripts/setup-hooks.py
 # Test hook manually
 .git/hooks/pre-commit
 ```
-
-#### Infinite Loop in Git Hooks
-If you encounter an infinite loop with commits (hooks creating commits that trigger more hooks):
-
-```bash
-# Use the automated fix script
-poetry run python scripts/fix-hook-loop.py
-
-# Or manually fix:
-# 1. Stop any running git processes
-pkill -f git
-
-# 2. Remove lock files
-rm -f .git/*.lock .git/*/*.lock
-
-# 3. Reset staged changes
-git reset HEAD
-
-# 4. Reinstall fixed hooks
-poetry run python scripts/setup-hooks.py
-```
-
-**Root Cause**: The post-commit hook was creating new commits without proper loop detection, causing infinite recursion.
-
-**Fix**: Added safeguards to detect badge update commits and skip hook execution for them.
 
 #### CI/CD Pipeline Failures
 1. Check GitHub Actions tab for detailed logs

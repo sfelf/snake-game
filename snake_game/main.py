@@ -1,5 +1,4 @@
-"""
-Snake Game - Main Entry Point
+"""Snake Game - Main Entry Point.
 
 Copyright (c) 2025 Thomas Nelson (https://github.com/sfelf)
 Licensed under CC BY-NC-SA 4.0 (https://creativecommons.org/licenses/by-nc-sa/4.0/)

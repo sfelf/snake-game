@@ -1,6 +1,6 @@
 """Tests for snake rendering components."""
 
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import pygame
 import pytest
@@ -187,14 +187,14 @@ class TestSnakeHeadRenderer:
             # Test when tongue should be visible (time % 900 not in [300, 600])
             mock_ticks.return_value = 100  # 100 % 300 = 100, should be visible
             renderer._draw_tongue(100, 100, Direction.RIGHT)
-            visible_calls = mock_line.call_count
+            mock_line.call_count
 
             mock_line.reset_mock()
 
             # Test when tongue should be hidden (time % 900 in [300, 600])
             mock_ticks.return_value = 300  # 300 % 300 = 0, should be hidden
             renderer._draw_tongue(100, 100, Direction.RIGHT)
-            hidden_calls = mock_line.call_count
+            mock_line.call_count
 
             # The logic is: (time_ms // 300) % 3 != 0 means visible
             # At 100ms: (100 // 300) % 3 = 0 % 3 = 0, so NOT visible
@@ -250,7 +250,7 @@ class TestSnakeScaleRenderer:
 
         points = [(100, 100), (120, 100), (140, 100), (160, 100), (180, 100)]
 
-        with patch.object(renderer.screen, "blit") as mock_blit:
+        with patch.object(renderer.screen, "blit"):
             renderer.draw_scales(points)
 
             # Should have created and blitted scale surfaces

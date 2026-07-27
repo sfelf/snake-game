@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
-"""Pre-commit hook to format code, update badges and run tests."""
+"""Pre-commit hook to format code and run tests."""
 
-import os
 import subprocess
 import sys
 from pathlib import Path
@@ -46,28 +45,20 @@ def main():
 
     # Format code with black
     if not run_command(
-        "poetry run black snake_game tests scripts", "Formatting code with black"
+        "poetry run black --workers 1 snake_game tests scripts",
+        "Formatting code with black",
     ):
         success = False
 
-    # Run flake8 linting (lenient for now)
-    print("🔍 Running flake8 linting (lenient mode)...")
-    run_command(
-        "poetry run flake8 snake_game --max-line-length=88 --extend-ignore=E203,E266,E501,W503,D100,D101,D102,D103,D104,TI100 --select=B,C,E,F,I,W,T4,B9",
-        "Linting with flake8 (lenient mode)",
-    )
-    # Don't fail commit on linting issues for now
+    if not run_command(
+        "poetry run flake8 snake_game tests scripts", "Linting with flake8"
+    ):
+        success = False
 
     # Run tests with coverage
     if not run_command(
         "poetry run pytest --cov=snake_game --cov-report=json --cov-report=html -q",
         "Running tests with coverage",
-    ):
-        success = False
-
-    # Generate badges
-    if not run_command(
-        "poetry run python scripts/generate_badges.py", "Generating badges"
     ):
         success = False
 
@@ -84,15 +75,6 @@ def main():
         # Auto-stage formatting changes
         subprocess.run(["git", "add", "-u"], check=False)
         print("✅ Automatically staged formatting changes")
-
-    # Check if README was updated
-    result = subprocess.run(
-        ["git", "diff", "--name-only", "README.md"], capture_output=True, text=True
-    )
-    if result.stdout.strip():
-        print("📝 README.md badges updated")
-        # Stage the updated README
-        subprocess.run(["git", "add", "README.md", "badges/"], check=False)
 
     if success:
         print("✅ All pre-commit checks passed!")

@@ -2,7 +2,7 @@
 
 import json
 import os
-from typing import List
+from typing import List, Optional
 
 
 class ScoreManager:
@@ -56,7 +56,7 @@ class ScoreManager:
         """Reset the current score to zero."""
         self.current_score = 0
 
-    def update_high_scores(self, score: int = None) -> bool:
+    def update_high_scores(self, score: Optional[int] = None) -> bool:
         """Update high scores with a new score.
 
         Args:
@@ -81,7 +81,7 @@ class ScoreManager:
         self.high_scores = [0] * self.max_scores
         self._save_high_scores()
 
-    def is_high_score(self, score: int = None) -> bool:
+    def is_high_score(self, score: Optional[int] = None) -> bool:
         """Check if a score would be a high score.
 
         Args:

@@ -1,7 +1,5 @@
 """Tests for utility modules."""
 
-import pytest
-
 from snake_game.utils import AudioManager, GameConstants
 
 
@@ -88,7 +86,7 @@ class TestAudioManager:
 
     def test_music_state_tracking(self):
         """Test music state tracking."""
-        initial_state = self.audio_manager.music_playing
+        self.audio_manager.music_playing
 
         self.audio_manager.start_background_music()
         # State might change depending on audio availability

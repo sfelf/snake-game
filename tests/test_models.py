@@ -1,16 +1,6 @@
 """Tests for game models."""
 
-import pytest
-
-from snake_game.models import (
-    Direction,
-    Fruit,
-    FruitType,
-    GameState,
-    GameStateManager,
-    ScoreManager,
-    Snake,
-)
+from snake_game.models import Direction, FruitType, GameState
 
 
 class TestSnake:
@@ -101,10 +91,14 @@ class TestSnake:
         # Make many moves without growth
         for i in range(20):
             snake.move(grow=False)
+            length_message = (
+                f"Snake length changed from {initial_length} to "
+                f"{snake.length} on move {i + 1}"
+            )
+            assert snake.length == initial_length, length_message
             assert (
-                snake.length == initial_length
-            ), f"Snake length changed from {initial_length} to {snake.length} on move {i+1}"
-            assert len(snake.segments) > 0, f"Snake segments became empty on move {i+1}"
+                len(snake.segments) > 0
+            ), f"Snake segments became empty on move {i + 1}"
 
     def test_alternating_growth_and_normal_moves(self, snake):
         """Test alternating between growth and normal moves."""
@@ -117,9 +111,11 @@ class TestSnake:
         new_length = snake.length
         for i in range(5):
             snake.move(grow=False)
-            assert (
-                snake.length == new_length
-            ), f"Snake length should remain {new_length} but became {snake.length} on move {i+1}"
+            message = (
+                f"Snake length should remain {new_length} but became "
+                f"{snake.length} on move {i + 1}"
+            )
+            assert snake.length == new_length, message
 
         # Grow again
         snake.move(grow=True)
@@ -235,8 +231,7 @@ class TestScoreManager:
         """Test high score detection."""
         # Initially, any positive score is a high score since all scores are 0
         assert score_manager.is_high_score(1) is True
-        # Zero score should not be considered a high score when compared to existing zeros
-        # But our current implementation considers it a high score if there are zeros in the list
+        # Zero is treated as a high score while empty slots remain in the list.
         # Let's test the actual behavior
 
         # Add some scores first

@@ -1,13 +1,10 @@
 # Snake Game
 
-[![Test Coverage](https://img.shields.io/badge/coverage-86.6%25-green.svg)](htmlcov/index.html)
+[![CI](https://github.com/sfelf/snake-game/actions/workflows/ci.yml/badge.svg)](https://github.com/sfelf/snake-game/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/sfelf/snake-game/graph/badge.svg)](https://codecov.io/gh/sfelf/snake-game)
 [![Python](https://img.shields.io/badge/python-3.13+-blue.svg)](https://python.org)
 [![Pygame](https://img.shields.io/badge/pygame-2.6.1-green.svg)](https://pygame.org)
-[![Tests](https://img.shields.io/badge/tests-132%20passing-brightgreen.svg)](tests/)
-[![Lines of Code](https://img.shields.io/badge/lines%20of%20code-2139-blue.svg)](snake_game/)
-[![Code Quality](https://img.shields.io/badge/code%20quality-refactored-brightgreen.svg)](README.md#architecture)
 [![License](https://img.shields.io/badge/license-CC%20BY--NC--SA%204.0-blue.svg)](LICENSE)
-[![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](https://github.com/sfelf/snake-game/actions)
 
 
 
@@ -262,7 +259,7 @@ This project follows professional software development practices with a clean, m
 ## Architecture
 
 ### Code Quality & Testing
-- **Test Coverage**: 38.5% and growing with comprehensive test suite
+- **Test Coverage**: At least 85%, enforced by CI
 - **Separation of Concerns**: Clean architecture with distinct layers
 - **Component-Based Rendering**: Modular rendering system with specialized components
 - **Path Smoothing**: Advanced mathematical algorithms for smooth snake curves
@@ -332,7 +329,6 @@ snake-game/
 ├── pytest.ini              # Pytest configuration
 ├── pyproject.toml           # Poetry configuration with coverage tools
 ├── poetry.lock              # Dependency lock file
-├── coverage.json            # Coverage data
 ├── .gitignore              # Git ignore rules
 └── README.md               # This file
 ```
@@ -420,9 +416,9 @@ poetry run pytest -v
 
 ### Coverage Reports
 
-- **Current Coverage**: 38.5%
+- **Current Coverage**: 85.7%
 - **HTML Reports**: Available in `htmlcov/index.html` after running coverage
-- **JSON Data**: Coverage data stored in `coverage.json`
+- **CI Reports**: XML, JSON, and HTML reports are retained as workflow artifacts
 - **Missing Lines**: Detailed in terminal output with `--cov-report=term-missing`
 
 ### Test Categories

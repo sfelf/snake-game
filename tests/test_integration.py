@@ -2,7 +2,6 @@
 
 from unittest.mock import Mock, patch
 
-import pygame
 import pytest
 
 from snake_game.controllers import GameController
@@ -101,7 +100,8 @@ class TestGameIntegration:
         # Check that fruit was eaten
         assert controller.score_manager.score == initial_score + 4
         # Note: The snake length should increase because we ate fruit
-        # But our move logic removes the tail after adding the head, so we need to check the actual implementation
+        # The move logic removes the tail after adding the head, so check the
+        # resulting length rather than assuming a particular implementation.
         assert (
             controller.snake.length >= initial_length
         )  # Should be at least the same or more
@@ -152,14 +152,15 @@ class TestGameIntegration:
             controller._move_snake()
 
             # Snake should maintain its length
-            assert (
-                controller.snake.length == initial_length
-            ), f"Snake length changed from {initial_length} to {controller.snake.length} on move {i+1}"
+            message = (
+                f"Snake length changed from {initial_length} to "
+                f"{controller.snake.length} on move {i + 1}"
+            )
+            assert controller.snake.length == initial_length, message
 
             # Snake should never be empty
-            assert (
-                len(controller.snake.segments) > 0
-            ), f"Snake segments became empty on move {i+1}"
+            message = f"Snake segments became empty on move {i + 1}"
+            assert len(controller.snake.segments) > 0, message
 
             # Break if game over (collision)
             if not controller.state_manager.is_state(GameState.PLAYING):
@@ -188,20 +189,26 @@ class TestGameIntegration:
         controller._move_snake()
 
         # Verify growth and scoring
-        assert (
-            controller.snake.length == initial_length + 1
-        ), f"Snake should grow from {initial_length} to {initial_length + 1}, but is {controller.snake.length}"
-        assert (
-            controller.score_manager.score == initial_score + 4
-        ), f"Score should increase by 4, from {initial_score} to {initial_score + 4}, but is {controller.score_manager.score}"
+        growth_message = (
+            f"Snake should grow from {initial_length} to {initial_length + 1}, "
+            f"but is {controller.snake.length}"
+        )
+        assert controller.snake.length == initial_length + 1, growth_message
+        score_message = (
+            f"Score should increase by 4, from {initial_score} to "
+            f"{initial_score + 4}, but is {controller.score_manager.score}"
+        )
+        assert controller.score_manager.score == initial_score + 4, score_message
 
         # Verify snake maintains new length in subsequent moves
         new_length = controller.snake.length
         for i in range(5):
             controller._move_snake()
-            assert (
-                controller.snake.length == new_length
-            ), f"Snake length should remain {new_length} but became {controller.snake.length} on move {i+1} after eating"
+            message = (
+                f"Snake length should remain {new_length} but became "
+                f"{controller.snake.length} on move {i + 1} after eating"
+            )
+            assert controller.snake.length == new_length, message
 
             if not controller.state_manager.is_state(GameState.PLAYING):
                 break
@@ -222,20 +229,19 @@ class TestGameIntegration:
                 controller._move_snake()
 
                 # Verify snake always has segments
-                assert (
-                    len(controller.snake.segments) > 0
-                ), f"Snake segments became empty on move {i+1}"
+                message = f"Snake segments became empty on move {i + 1}"
+                assert len(controller.snake.segments) > 0, message
 
                 # Verify snake has a valid head
                 head = controller.snake.head
-                assert (
-                    isinstance(head, tuple) and len(head) == 2
-                ), f"Snake head is invalid: {head} on move {i+1}"
+                message = f"Snake head is invalid: {head} on move {i + 1}"
+                assert isinstance(head, tuple) and len(head) == 2, message
 
             except IndexError as e:
                 if "pop from empty list" in str(e):
                     pytest.fail(
-                        f"IndexError 'pop from empty list' occurred on move {i+1}: {e}"
+                        f"IndexError 'pop from empty list' occurred "
+                        f"on move {i + 1}: {e}"
                     )
                 else:
                     raise  # Re-raise if it's a different IndexError
@@ -273,19 +279,26 @@ class TestGameIntegration:
             expected_score += 4
 
             # Verify correct growth and scoring
-            assert (
-                controller.snake.length == expected_length
-            ), f"After eating fruit {fruit_num + 1}, snake length should be {expected_length}, but is {controller.snake.length}"
-            assert (
-                controller.score_manager.score == expected_score
-            ), f"After eating fruit {fruit_num + 1}, score should be {expected_score}, but is {controller.score_manager.score}"
+            length_message = (
+                f"After eating fruit {fruit_num + 1}, snake length should be "
+                f"{expected_length}, but is {controller.snake.length}"
+            )
+            assert controller.snake.length == expected_length, length_message
+            score_message = (
+                f"After eating fruit {fruit_num + 1}, score should be "
+                f"{expected_score}, but is {controller.score_manager.score}"
+            )
+            assert controller.score_manager.score == expected_score, score_message
 
             # Make a few normal moves to ensure length is maintained
             for move in range(3):
                 controller._move_snake()
-                assert (
-                    controller.snake.length == expected_length
-                ), f"Snake length changed unexpectedly to {controller.snake.length} after fruit {fruit_num + 1}, move {move + 1}"
+                message = (
+                    f"Snake length changed unexpectedly to "
+                    f"{controller.snake.length} after fruit {fruit_num + 1}, "
+                    f"move {move + 1}"
+                )
+                assert controller.snake.length == expected_length, message
 
                 if not controller.state_manager.is_state(GameState.PLAYING):
                     return  # Exit if game over

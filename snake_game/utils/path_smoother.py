@@ -192,7 +192,7 @@ class PathSmoother:
 
     @staticmethod
     def convert_segments_to_screen_points(
-        segments: List[Tuple[int, int]]
+        segments: List[Tuple[int, int]],
     ) -> List[Tuple[int, int]]:
         """Convert grid positions to screen coordinates.
 

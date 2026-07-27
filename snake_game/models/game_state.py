@@ -1,5 +1,7 @@
 """Game state management for the Snake Game."""
 
+from typing import Optional
+
 from snake_game.models.enums import GameState
 
 
@@ -13,7 +15,7 @@ class GameStateManager:
             initial_state: The initial game state
         """
         self._current_state = initial_state
-        self._previous_state = None
+        self._previous_state: Optional[GameState] = None
 
     @property
     def current_state(self) -> GameState:
@@ -21,7 +23,7 @@ class GameStateManager:
         return self._current_state
 
     @property
-    def previous_state(self) -> GameState:
+    def previous_state(self) -> Optional[GameState]:
         """Get the previous game state."""
         return self._previous_state
 
