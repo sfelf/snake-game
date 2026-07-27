@@ -184,17 +184,17 @@ class TestSnakeHeadRenderer:
     def test_tongue_visibility_timing(self, mock_ticks, renderer):
         """Test tongue visibility based on timing."""
         with patch("pygame.draw.line") as mock_line:
-            # Test when tongue should be visible (time % 900 not in [300, 600])
-            mock_ticks.return_value = 100  # 100 % 300 = 100, should be visible
+            # At 100ms, the tongue is hidden.
+            mock_ticks.return_value = 100
             renderer._draw_tongue(100, 100, Direction.RIGHT)
-            mock_line.call_count
+            assert mock_line.call_count == 0
 
             mock_line.reset_mock()
 
-            # Test when tongue should be hidden (time % 900 in [300, 600])
-            mock_ticks.return_value = 300  # 300 % 300 = 0, should be hidden
+            # At 300ms, the tongue is visible.
+            mock_ticks.return_value = 300
             renderer._draw_tongue(100, 100, Direction.RIGHT)
-            mock_line.call_count
+            assert mock_line.call_count > 0
 
             # The logic is: (time_ms // 300) % 3 != 0 means visible
             # At 100ms: (100 // 300) % 3 = 0 % 3 = 0, so NOT visible

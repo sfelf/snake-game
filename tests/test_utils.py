@@ -86,10 +86,10 @@ class TestAudioManager:
 
     def test_music_state_tracking(self):
         """Test music state tracking."""
-        self.audio_manager.music_playing
+        assert self.audio_manager.music_playing is False
 
         self.audio_manager.start_background_music()
         # State might change depending on audio availability
 
         self.audio_manager.stop_background_music()
-        # Should stop music if it was playing
+        assert self.audio_manager.music_playing is False

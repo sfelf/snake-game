@@ -6,6 +6,46 @@ import stat
 from pathlib import Path
 
 
+def remove_legacy_post_commit_hook(
+    hooks_dir: Path | None = None,
+) -> bool:
+    """Remove the obsolete badge hook without touching unrelated user hooks.
+
+    Args:
+        hooks_dir: Directory containing the repository's Git hooks.
+
+    Returns:
+        True when a legacy managed hook was removed, otherwise False.
+    """
+    resolved_hooks_dir = hooks_dir or Path(".git/hooks")
+    post_commit_hook = resolved_hooks_dir / "post-commit"
+    if not post_commit_hook.exists():
+        return False
+
+    try:
+        hook_content = post_commit_hook.read_text(encoding="utf-8")
+    except OSError as error:
+        print(f"⚠️  Could not inspect existing {post_commit_hook}: {error}")
+        return False
+
+    managed_markers = (
+        "scripts/generate_badges.py",
+        'git commit -m "Update badges [skip ci]"',
+    )
+    if not all(marker in hook_content for marker in managed_markers):
+        print(f"ℹ️  Preserved unrelated existing hook at {post_commit_hook}")
+        return False
+
+    try:
+        post_commit_hook.unlink()
+    except OSError as error:
+        print(f"⚠️  Could not remove legacy {post_commit_hook}: {error}")
+        return False
+
+    print(f"✅ Removed legacy badge hook at {post_commit_hook}")
+    return True
+
+
 def setup_pre_commit_hook():
     """Setup pre-commit hook."""
     hooks_dir = Path(".git/hooks")
@@ -65,6 +105,7 @@ def main():
         os.chmod(script, st.st_mode | stat.S_IEXEC)
 
     # Setup hooks
+    remove_legacy_post_commit_hook()
     setup_pre_commit_hook()
 
     print("\n🎉 Git hooks setup complete!")
